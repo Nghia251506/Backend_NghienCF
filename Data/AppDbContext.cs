@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
-using ProjectName.Models;
+using Backend_Nghiencf.Models;
 
-namespace ProjectName.Data
+namespace Backend_Nghiencf.Data
 {
     public class AppDbContext : DbContext
     {
@@ -11,7 +11,7 @@ namespace ProjectName.Data
         public DbSet<TicketType> TicketTypes { get; set; }
         public DbSet<Booking> Bookings { get; set; }
         public DbSet<Ticket> Tickets { get; set; }
-        public DbSet<AdminUser> AdminUsers { get; set; }
-        public DbSet<Setting> Settings { get; set; }
+        // public DbSet<AdminUser> AdminUsers { get; set; }
+        // public DbSet<Setting> Settings { get; set; }
     }
 }

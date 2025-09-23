@@ -1,0 +1,37 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.2.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Backend_Nghiencf", "Backend_Nghiencf.csproj", "{B7A21A92-A40C-41BF-982C-4D7E52E8A965}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
+		Release|Any CPU = Release|Any CPU
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{B7A21A92-A40C-41BF-982C-4D7E52E8A965}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B7A21A92-A40C-41BF-982C-4D7E52E8A965}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B7A21A92-A40C-41BF-982C-4D7E52E8A965}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{B7A21A92-A40C-41BF-982C-4D7E52E8A965}.Debug|x64.Build.0 = Debug|Any CPU
+		{B7A21A92-A40C-41BF-982C-4D7E52E8A965}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{B7A21A92-A40C-41BF-982C-4D7E52E8A965}.Debug|x86.Build.0 = Debug|Any CPU
+		{B7A21A92-A40C-41BF-982C-4D7E52E8A965}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B7A21A92-A40C-41BF-982C-4D7E52E8A965}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B7A21A92-A40C-41BF-982C-4D7E52E8A965}.Release|x64.ActiveCfg = Release|Any CPU
+		{B7A21A92-A40C-41BF-982C-4D7E52E8A965}.Release|x64.Build.0 = Release|Any CPU
+		{B7A21A92-A40C-41BF-982C-4D7E52E8A965}.Release|x86.ActiveCfg = Release|Any CPU
+		{B7A21A92-A40C-41BF-982C-4D7E52E8A965}.Release|x86.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {B4591B3B-20F1-4115-9F6A-2C4882690AC3}
+	EndGlobalSection
+EndGlobal
