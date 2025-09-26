@@ -5,6 +5,7 @@ using Backend_Nghiencf.Helpers;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using Backend_Nghiencf.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -40,6 +41,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddScoped<IBookingService, BookingService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<ISettingService, SettingService>();
+builder.Services.AddScoped<IShowService, ShowService>();
 builder.Services.AddScoped<JwtHelper>();
 
 builder.Services.AddEndpointsApiExplorer();
