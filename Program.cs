@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Backend_Nghiencf.Models;
+using Microsoft.AspNetCore.Cors;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -42,10 +43,22 @@ builder.Services.AddScoped<IBookingService, BookingService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<ISettingService, SettingService>();
 builder.Services.AddScoped<IShowService, ShowService>();
+builder.Services.AddScoped<ITicketTypeService, TicketTypeService>();
 builder.Services.AddScoped<JwtHelper>();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowFrontend",
+        policy =>
+        {
+            policy.WithOrigins("http://localhost:5173")
+                  .AllowAnyHeader()
+                  .AllowAnyMethod()
+                  .AllowCredentials();
+        });
+});
 
 var app = builder.Build();
 if (app.Environment.IsDevelopment())
@@ -53,6 +66,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+app.UseCors("AllowFrontend");
 app.UseHttpsRedirection();
 app.UseAuthorization();
 app.MapControllers();

@@ -26,6 +26,7 @@ namespace Backend_Nghiencf.Data
                 e.Property(x => x.Date).HasColumnName("date");
                 e.Property(x => x.Location).HasColumnName("location");
                 e.Property(x => x.BannerUrl).HasColumnName("banner_url");
+                e.Property(x => x.Capacity).HasColumnName("capacity");
             });
             modelBuilder.Entity<User>(e =>
             {

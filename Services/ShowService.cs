@@ -24,7 +24,8 @@ namespace Backend_Nghiencf.Services
                 Description = s.Description,
                 Date = s.Date,
                 Location = s.Location,
-                BannerUrl = s.BannerUrl
+                BannerUrl = s.BannerUrl,
+                Capacity = s.Capacity
             })
             .ToListAsync();
         }
@@ -41,7 +42,8 @@ namespace Backend_Nghiencf.Services
                 Description = show.Description,
                 Date = show.Date,
                 Location = show.Location,
-                BannerUrl = show.BannerUrl
+                BannerUrl = show.BannerUrl,
+                Capacity = show.Capacity
             };
         }
 
@@ -54,7 +56,8 @@ namespace Backend_Nghiencf.Services
                 Description = dto.Description,
                 Date = dto.Date,
                 Location = dto.Location,
-                BannerUrl = dto.BannerUrl
+                BannerUrl = dto.BannerUrl,
+                Capacity = dto.Capacity
             };
             _context.Shows.Add(show);
             await _context.SaveChangesAsync();
@@ -66,7 +69,8 @@ namespace Backend_Nghiencf.Services
                 Description = show.Description,
                 Date = show.Date,
                 Location = show.Location,
-                BannerUrl = show.BannerUrl
+                BannerUrl = show.BannerUrl,
+                Capacity = show.Capacity
             };
         }
 
@@ -89,7 +93,8 @@ namespace Backend_Nghiencf.Services
                 Description = show.Description,
                 Date = show.Date,
                 Location = show.Location,
-                BannerUrl = show.BannerUrl
+                BannerUrl = show.BannerUrl,
+                Capacity = show.Capacity
             };
         }
 
