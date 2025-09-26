@@ -11,5 +11,6 @@ namespace Backend_Nghiencf.DTOs
         public string? Location { get; set; }
         public string? BannerUrl { get; set; }
         public string? Capacity { get; set; }
+        public string? Slogan { get; set; }
     }
 }

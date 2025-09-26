@@ -25,7 +25,8 @@ namespace Backend_Nghiencf.Services
                 Date = s.Date,
                 Location = s.Location,
                 BannerUrl = s.BannerUrl,
-                Capacity = s.Capacity
+                Capacity = s.Capacity,
+                Slogan = s.Slogan
             })
             .ToListAsync();
         }
@@ -43,7 +44,8 @@ namespace Backend_Nghiencf.Services
                 Date = show.Date,
                 Location = show.Location,
                 BannerUrl = show.BannerUrl,
-                Capacity = show.Capacity
+                Capacity = show.Capacity,
+                Slogan = show.Slogan
             };
         }
 
@@ -57,7 +59,8 @@ namespace Backend_Nghiencf.Services
                 Date = dto.Date,
                 Location = dto.Location,
                 BannerUrl = dto.BannerUrl,
-                Capacity = dto.Capacity
+                Capacity = dto.Capacity,
+                Slogan = dto.Slogan
             };
             _context.Shows.Add(show);
             await _context.SaveChangesAsync();
@@ -70,7 +73,8 @@ namespace Backend_Nghiencf.Services
                 Date = show.Date,
                 Location = show.Location,
                 BannerUrl = show.BannerUrl,
-                Capacity = show.Capacity
+                Capacity = show.Capacity,
+                Slogan = show.Slogan
             };
         }
 
@@ -84,6 +88,8 @@ namespace Backend_Nghiencf.Services
             show.Date = dto.Date;
             show.Location = dto.Location;
             show.BannerUrl = dto.BannerUrl;
+            show.Capacity = dto.Capacity;
+            show.Slogan = dto.Slogan;
             await _context.SaveChangesAsync();
 
             return new ShowReadDto
@@ -94,7 +100,8 @@ namespace Backend_Nghiencf.Services
                 Date = show.Date,
                 Location = show.Location,
                 BannerUrl = show.BannerUrl,
-                Capacity = show.Capacity
+                Capacity = show.Capacity,
+                Slogan = show.Slogan
             };
         }
 
