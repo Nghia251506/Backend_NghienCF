@@ -41,7 +41,7 @@ namespace Backend_Nghiencf.Services
         }
 
         // Login
-        public async Task<string?> LoginAsync(UserLoginDto dto)
+        public async Task<AuthResponse?> LoginAsync(UserLoginDto dto)
         {
             var user = await _context.Users.FirstOrDefaultAsync(u => u.UserName == dto.UserName);
             if (user == null) return null;
@@ -49,14 +49,23 @@ namespace Backend_Nghiencf.Services
             bool isValid = BCrypt.Net.BCrypt.Verify(dto.PassWord, user.PassWord);
             if (!isValid) return null;
 
-            // return new UserReadDto
-            // {
-            //     Id = user.Id,
-            //     UserName = user.UserName,
-            //     Email = user.Email
-            // };
-            return _jwtHelper.GenerateToken(user);
+            var token = _jwtHelper.GenerateToken(user);
+
+            var userDto = new UserReadDto
+            {
+                Id = user.Id,
+                UserName = user.UserName,
+                Role = user.Role
+                // KHÔNG trả password
+            };
+
+            return new AuthResponse
+            {
+                Token = token,
+                User = userDto
+            };
         }
+
 
     }
 }

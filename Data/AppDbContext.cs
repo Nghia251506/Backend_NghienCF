@@ -36,6 +36,7 @@ namespace Backend_Nghiencf.Data
                 e.Property(x => x.UserName).HasColumnName("username");
                 e.Property(x => x.PassWord).HasColumnName("password");
                 e.Property(x => x.Email).HasColumnName("email");
+                e.Property(x => x.Role).HasColumnName("role");
             });
 
             modelBuilder.Entity<Ticket>(e =>
