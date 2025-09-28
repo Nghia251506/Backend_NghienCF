@@ -56,17 +56,19 @@ builder.Services.AddDbContext<AppDbContext>(opt =>
     opt.LogTo(Console.WriteLine, LogLevel.Information);
 });
 // Bind options từ appsettings.json (section "Tingee")
-builder.Services.Configure<TingeeOptions>(builder.Configuration.GetSection("Tingee"));
+// builder.Services.Configure<TingeeOptions>(builder.Configuration.GetSection("Tingee"));
 
-// Đăng ký HttpClient cho TingeeClient
-builder.Services.AddHttpClient<ITingeeClient, TingeeClient>();
+// // Đăng ký HttpClient cho TingeeClient
+// builder.Services.AddHttpClient<ITingeeClient, TingeeClient>();
 // builder.Services.AddSingleton<ITingeeClient>(new FakeTingeeClient()); // trả về URL giả
 builder.Services.AddScoped<IBookingService, BookingService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<ISettingService, SettingService>();
 builder.Services.AddScoped<IShowService, ShowService>();
 builder.Services.AddScoped<ITicketTypeService, TicketTypeService>();
+builder.Services.AddScoped<ITicketService, TicketService>();
 builder.Services.AddScoped<JwtHelper>();
+builder.Services.AddHostedService<TicketBackfillService>();
 builder.Services.AddHostedService<PendingBookingExpiryService>();
 builder.Services.Configure<TingeeOptions>(
     builder.Configuration.GetSection("Tingee"));
@@ -75,7 +77,7 @@ builder.Services.AddHttpClient<ITingeeClient, TingeeClient>();
 
 
 Console.WriteLine($"Tingee:ClientId = '{builder.Configuration["Tingee:ClientId"]}'");
-Console.WriteLine($"Tingee:SecretToken = '{builder.Configuration["Tingee:SecretToken"]?.Substring(0,4)}***'");
+Console.WriteLine($"Tingee:SecretToken = '{builder.Configuration["Tingee:SecretToken"]?.Substring(0, 4)}***'");
 Console.WriteLine($"[CONF] Tingee:Bank:BankName = '{builder.Configuration["Tingee:Bank:BankName"]}'");
 Console.WriteLine($"[CONF] Tingee:Bank:AccountNumber = '{builder.Configuration["Tingee:Bank:AccountNumber"]}'");
 
@@ -84,16 +86,13 @@ Console.WriteLine($"[CONF] Tingee:Bank:AccountNumber = '{builder.Configuration["
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-builder.Services.AddCors(options =>
+builder.Services.AddCors(opts =>
 {
-    options.AddPolicy("AllowFrontend",
-        policy =>
-        {
-            policy.WithOrigins("http://localhost:5173")
-                  .AllowAnyHeader()
-                  .AllowAnyMethod()
-                  .AllowCredentials();
-        });
+    opts.AddPolicy("AllowFrontend", p =>
+        p.WithOrigins("http://localhost:5173")
+         .AllowAnyHeader()
+         .AllowAnyMethod()
+         .AllowCredentials());
 });
 
 var app = builder.Build();

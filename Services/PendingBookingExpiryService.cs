@@ -3,13 +3,14 @@ using Backend_Nghiencf.Data;
 
 public class PendingBookingExpiryService : BackgroundService
 {
-    private readonly IServiceScopeFactory _sf;
+    private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<PendingBookingExpiryService> _logger;
-    private const int TTL_MIN = 15;
-    private const int BATCH = 200;
 
-    public PendingBookingExpiryService(IServiceScopeFactory sf, ILogger<PendingBookingExpiryService> logger)
-    { _sf = sf; _logger = logger; }
+    public PendingBookingExpiryService(IServiceScopeFactory scopeFactory, ILogger<PendingBookingExpiryService> logger)
+    {
+        _scopeFactory = scopeFactory;
+        _logger = logger;
+    }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
@@ -17,38 +18,30 @@ public class PendingBookingExpiryService : BackgroundService
         {
             try
             {
-                using var scope = _sf.CreateScope();
+                using var scope = _scopeFactory.CreateScope();
                 var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
-                var cutoff = DateTime.UtcNow.AddMinutes(-TTL_MIN);
-                var list = await db.Bookings
-                    .Where(b => b.PaymentStatus == "pending" && b.CreatedAt < cutoff)
-                    .OrderBy(b => b.CreatedAt)
-                    .Take(BATCH)
-                    .ToListAsync(stoppingToken);
+                var cutoff = DateTime.UtcNow.AddMinutes(-15);  // hay theo VN time nếu bạn lưu local
+                const int take = 500;
 
-                if (list.Count > 0)
-                {
-                    await using var tx = await db.Database.BeginTransactionAsync(stoppingToken);
-                    foreach (var b in list)
-                    {
-                        if (b.PaymentStatus != "pending") continue;
+                var sql = @"
+                            UPDATE bookings
+                            SET payment_status = 'failed'
+                            WHERE payment_status = 'pending'
+                            AND created_at < {0}
+                            LIMIT {1};"; // MySQL cho phép LIMIT trong UPDATE
 
-                        // hoàn kho
-                        await db.Database.ExecuteSqlRawAsync(@"
-                            UPDATE TicketTypes
-                            SET RemainingQuantity = RemainingQuantity + {0}
-                            WHERE Id = {1} AND ShowId = {2}
-                        ", b.Quantity, b.TicketTypeId, b.ShowId, stoppingToken);
+                // ❌ SAI: truyền stoppingToken lẫn vào tham số SQL
+                // await db.Database.ExecuteSqlRawAsync(sql, cutoff, take, stoppingToken);
 
-                        b.PaymentStatus = "failed";
-                        b.PaymentTime   = DateTime.UtcNow;
-                    }
-                    await db.SaveChangesAsync(stoppingToken);
-                    await tx.CommitAsync(stoppingToken);
+                // ✅ ĐÚNG: tham số SQL trong mảng object[], token là tham số cuối
+                var affected = await db.Database.ExecuteSqlRawAsync(
+                    sql,
+                    new object[] { cutoff, take },
+                    stoppingToken
+                );
 
-                    _logger.LogInformation("Expired {count} bookings > {ttl}m", list.Count, TTL_MIN);
-                }
+                _logger.LogInformation("Expired {count} pending bookings older than {cutoff}", affected, cutoff);
             }
             catch (Exception ex)
             {

@@ -16,6 +16,14 @@ namespace Backend_Nghiencf.Controllers
             _typeService = typeService;
         }
 
+        [HttpGet("by-show/{showId:int}")]
+        public async Task<IActionResult> GetByShow([FromRoute] int showId, CancellationToken ct)
+        {
+            if (showId <= 0) return BadRequest("showId invalid.");
+            var items = await _typeService.GetByShowAsync(showId, ct);
+            return Ok(items);
+        }
+
         [HttpGet("getall")]
         public async Task<IActionResult> GetAll() => Ok(await _typeService.GetAllAsync());
 
@@ -30,7 +38,7 @@ namespace Backend_Nghiencf.Controllers
         public async Task<IActionResult> Create(TicketTypeCreateDto dto)
         {
             var emp = await _typeService.CreateAsync(dto);
-            return CreatedAtAction(nameof(GetById), new { id = emp.Id}, emp);
+            return CreatedAtAction(nameof(GetById), new { id = emp.Id }, emp);
         }
 
         [HttpPut("{id}")]

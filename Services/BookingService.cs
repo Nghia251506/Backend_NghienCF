@@ -41,73 +41,85 @@ namespace Backend_Nghiencf.Services
             if (dto.Quantity <= 0) throw new ArgumentException("Số lượng phải > 0");
 
             var strategy = _context.Database.CreateExecutionStrategy();
+
             return await strategy.ExecuteAsync(async () =>
             {
                 await using var tx = await _context.Database.BeginTransactionAsync(ct);
 
-                // 1) Trừ kho atomic
-                var affected = await _context.Database.ExecuteSqlInterpolatedAsync($@"
-            UPDATE ticket_types
-            SET remaining_quantity = remaining_quantity - {dto.Quantity}
-            WHERE id = {dto.TicketTypeId} AND remaining_quantity >= {dto.Quantity}
-        ", ct);
-
-                if (affected == 0)
-                {
-                    var probe = await _context.TicketTypes.AsNoTracking()
-                                 .Where(t => t.Id == dto.TicketTypeId)
-                                 .Select(t => new { t.Id, t.RemainingQuantity })
-                                 .SingleOrDefaultAsync(ct);
-
-                    var remain = probe?.RemainingQuantity ?? 0;
-                    throw new InvalidOperationException($"Không đủ số lượng vé (còn {remain}, yêu cầu {dto.Quantity}).");
-                }
-
-                // 2) Lấy type (NoTracking)
-                var type = await _context.TicketTypes.AsNoTracking()
-                            .SingleAsync(t => t.Id == dto.TicketTypeId, ct);
-
-                // 3) Tạo booking
-                _context.ChangeTracker.Clear();
-                var booking = new Booking
-                {
-                    ShowId = type.ShowId,
-                    TicketTypeId = dto.TicketTypeId,
-                    CustomerName = dto.CustomerName?.Trim() ?? "",
-                    Phone = dto.Phone?.Trim() ?? "",
-                    Quantity = dto.Quantity,
-                    TotalAmount = type.Price * dto.Quantity,
-                    PaymentStatus = "pending",
-                    PaymentTime = null,
-                    CreatedAt = DateTime.UtcNow
-                };
-
-                _context.Bookings.Add(booking);
-                await _context.SaveChangesAsync(ct);
-
-                // 4) Tạo QR
-                TingeeQrResult qr;
                 try
                 {
-                    qr = await _tingeeClient.CreateQrAsync(booking.Id, booking.TotalAmount, ct);
+                    // 1) Trừ kho atomic
+                    var affected = await _context.Database.ExecuteSqlInterpolatedAsync($@"
+                UPDATE ticket_types
+                SET remaining_quantity = remaining_quantity - {dto.Quantity}
+                WHERE id = {dto.TicketTypeId} AND remaining_quantity >= {dto.Quantity};
+            ", ct);
+
+                    if (affected == 0)
+                    {
+                        var remain = await _context.TicketTypes.AsNoTracking()
+                            .Where(t => t.Id == dto.TicketTypeId)
+                            .Select(t => (int?)t.RemainingQuantity)
+                            .SingleOrDefaultAsync(ct) ?? 0;
+
+                        throw new InvalidOperationException($"Không đủ số lượng vé (còn {remain}, yêu cầu {dto.Quantity}).");
+                    }
+
+                    // 2) Lấy type (NoTracking)
+                    var type = await _context.TicketTypes.AsNoTracking()
+                        .SingleAsync(t => t.Id == dto.TicketTypeId, ct);
+
+                    // 3) Tạo booking (pending)
+                    var booking = new Booking
+                    {
+                        ShowId = type.ShowId,
+                        TicketTypeId = dto.TicketTypeId,
+                        CustomerName = dto.CustomerName?.Trim() ?? "",
+                        Phone = dto.Phone?.Trim() ?? "",
+                        Quantity = dto.Quantity,
+                        TotalAmount = type.Price * dto.Quantity,
+                        PaymentStatus = "pending",
+                        PaymentTime = null,
+                        CreatedAt = DateTime.UtcNow
+                    };
+
+                    _context.Bookings.Add(booking);
+                    await _context.SaveChangesAsync(ct); // cần Id để tạo QR
+
+                    // 4) Gọi Tingee tạo QR
+                    var qr = await _tingeeClient.CreateQrAsync(booking.Id, booking.TotalAmount, ct);
+
+                    // 5) Thành công -> COMMIT
+                    await tx.CommitAsync(ct);
+
+                    return new BookingResponseDto
+                    {
+                        BookingId = booking.Id,
+                        TotalAmount = booking.TotalAmount,
+                        PaymentQrUrl = qr.QrUrl,
+                        PaymentQrImage = qr.QrCodeImage,
+                        PaymentQrString = qr.QrCode
+                    };
                 }
-                catch (HttpRequestException ex)
+                catch
                 {
-                    // lỗi phía Tingee → rollback & trả lỗi 502 từ Controller
-                    // rollback stock + xoá booking nếu cần (giữ như bạn đang làm)
+                    // Lỗi -> rollback + cộng trả kho
+                    await tx.RollbackAsync(ct);
+
+                    await _context.Database.ExecuteSqlInterpolatedAsync($@"
+                UPDATE ticket_types
+                SET remaining_quantity = remaining_quantity + {dto.Quantity}
+                WHERE id = {dto.TicketTypeId};
+            ", ct);
+
+                    // Xoá booking chưa commit thì không cần, nhưng nếu đã SaveChanges
+                    // trước rollback ở RDBMS khác scope, có thể đảm bảo bằng cách:
+                    // _context.ChangeTracker.Clear(); // tuỳ chọn
                     throw;
                 }
-
-                return new BookingResponseDto
-                {
-                    BookingId = booking.Id,
-                    TotalAmount = booking.TotalAmount,
-                    PaymentQrUrl = qr.QrUrl,
-                    PaymentQrImage = qr.QrCodeImage,
-                    PaymentQrString = qr.QrCode
-                };
             });
         }
+
 
 
 
@@ -128,5 +140,6 @@ namespace Backend_Nghiencf.Services
         {
             throw new NotImplementedException();
         }
+
     }
 }

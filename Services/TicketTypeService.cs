@@ -14,6 +14,24 @@ namespace Backend_Nghiencf.Services
             _context = context;
         }
 
+        public async Task<List<TicketTypeReadDto>> GetByShowAsync(int showId, CancellationToken ct = default)
+        {
+            return await _context.TicketTypes
+                .AsNoTracking()
+                .Where(t => t.ShowId == showId)
+                .OrderBy(t => t.Price)
+                .Select(t => new TicketTypeReadDto
+                {
+                    Id = t.Id,
+                    ShowId = t.ShowId,
+                    Name = t.Name,
+                    Price = t.Price,
+                    Color = t.Color,
+                    TotalQuantity = t.TotalQuantity,
+                    RemainingQuantity = t.RemainingQuantity
+                })
+                .ToListAsync(ct);
+        }
         public async Task<IEnumerable<TicketTypeReadDto>> GetAllAsync()
         {
             return await _context.TicketTypes
