@@ -7,5 +7,6 @@ namespace Backend_Nghiencf.DTOs
         public string Color { get; set; }
         public decimal Price { get; set; }
         public int TotalQuantity { get; set; }
+        
     }
 }

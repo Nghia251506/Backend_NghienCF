@@ -14,6 +14,24 @@ namespace Backend_Nghiencf.Services
             _context = context;
         }
 
+        public async Task<IEnumerable<Booking>> GetAllSync()
+        {
+            return await _context.Bookings
+                    .Select(e => new Booking
+                    {
+                        Id = e.Id,
+                        ShowId = e.ShowId,
+                        Show = e.Show,
+                        TicketTypeId = e.TicketTypeId,
+                        TicketType = e.TicketType,
+                        CustomerName = e.CustomerName,
+                        Phone = e.Phone,
+                        Quantity = e.Quantity,
+                        TotalAmount = e.TotalAmount,
+                        PaymentStatus = e.PaymentStatus,
+                        PaymentTime = e.PaymentTime
+                    }).ToListAsync();
+        }
         public async Task<BookingResponseDto> CreateBookingAsync(BookingDto dto)
         {
             var ticketType = await _context.TicketTypes.FindAsync(dto.TicketTypeId);

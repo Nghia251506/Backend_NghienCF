@@ -15,6 +15,10 @@ namespace Backend_Nghiencf.Controllers
             _bookingService = bookingService;
         }
 
+        [HttpGet("getall")]
+        public async Task<IActionResult> GetAllBooking() =>
+            Ok(await _bookingService.GetAllSync());
+
         [HttpPost("create")]
         public async Task<IActionResult> CreateBooking([FromBody] BookingDto dto)
         {

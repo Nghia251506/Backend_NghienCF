@@ -60,7 +60,7 @@ namespace Backend_Nghiencf.Services
                 Color = dto.Color,
                 Price = dto.Price,
                 TotalQuantity = dto.TotalQuantity,
-                RemainingQuantity = dto.RemainingQuantity
+                RemainingQuantity = dto.TotalQuantity
             };
             _context.TicketTypes.Add(s);
             await _context.SaveChangesAsync();
