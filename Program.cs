@@ -68,7 +68,9 @@ builder.Services.AddScoped<IShowService, ShowService>();
 builder.Services.AddScoped<ITicketTypeService, TicketTypeService>();
 builder.Services.AddScoped<JwtHelper>();
 builder.Services.AddHostedService<PendingBookingExpiryService>();
-builder.Services.Configure<TingeeOptions>(builder.Configuration.GetSection("Tingee"));
+builder.Services.Configure<TingeeOptions>(
+    builder.Configuration.GetSection("Tingee"));
+
 builder.Services.AddHttpClient<ITingeeClient, TingeeClient>();
 
 

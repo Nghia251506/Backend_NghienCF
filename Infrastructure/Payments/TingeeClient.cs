@@ -55,7 +55,7 @@ public sealed class TingeeClient : ITingeeClient
         }
     }
 
-    public async Task<string> CreateQrAsync(long bookingId, decimal amount, CancellationToken ct = default)
+    public async Task<TingeeQrResult> CreateQrAsync(long bookingId, decimal amount, CancellationToken ct = default)
     {
         // ==== validate Bank config (theo yêu cầu Tingee) ====
         var bankName = _opt.Bank?.BankName?.Trim().ToUpperInvariant();
@@ -70,12 +70,12 @@ public sealed class TingeeClient : ITingeeClient
         // ==== build body JSON CHÍNH XÁC để ký & gửi ====
         var payload = new
         {
-            orderCode   = bookingId.ToString(),
-            amount      = (long)Math.Round(amount),
+            orderCode = bookingId.ToString(),
+            amount = (long)Math.Round(amount),
             description = $"Booking #{bookingId}",
-            currency    = "VND",
+            currency = "VND",
             // theo doc/lỗi trả về
-            bankName    = bankName,          // VCB/BIDV/...
+            bankName = bankName,          // VCB/BIDV/...
             accountNumber = accountNumber,   // số TK nhận
             accountName = accountName        // nếu doc yêu cầu, không có cũng không sao
         };
@@ -114,23 +114,31 @@ public sealed class TingeeClient : ITingeeClient
 
         // ==== parse kết quả linh hoạt (qrUrl | data.qrUrl | data.qrCodeImage) ====
         using var doc = JsonDocument.Parse(raw);
-        var root = doc.RootElement;
-
-        // 1) top-level `qrUrl`
-        if (root.TryGetProperty("qrUrl", out var topQrUrl) && topQrUrl.ValueKind == JsonValueKind.String)
-            return topQrUrl.GetString()!;
-
-        // 2) `data.qrUrl` hoặc `data.qrCodeImage`
-        if (root.TryGetProperty("data", out var data))
+        if (doc.RootElement.TryGetProperty("code", out var codeEl) && codeEl.GetString() is string code && code != "00")
         {
-            if (data.TryGetProperty("qrUrl", out var qr2) && qr2.ValueKind == JsonValueKind.String)
-                return qr2.GetString()!;
-
-            if (data.TryGetProperty("qrCodeImage", out var qrImg) && qrImg.ValueKind == JsonValueKind.String)
-                return qrImg.GetString()!; // data URL PNG -> dùng trực tiếp cho <img src=...>
+            throw new HttpRequestException($"Tingee error {code}: {raw}");
         }
 
-        throw new InvalidOperationException("Không tìm thấy 'qrUrl' hoặc 'qrCodeImage' trong phản hồi Tingee: " + raw);
+        string? qrUrl = null, qrImg = null, qrCode = null;
+
+        // 1) Một số môi trường trả thẳng qrUrl/qrCodeImage/qrCode ở root
+        if (doc.RootElement.TryGetProperty("qrUrl", out var qru)) qrUrl = qru.GetString();
+        if (doc.RootElement.TryGetProperty("qrCodeImage", out var qri)) qrImg = qri.GetString();
+        if (doc.RootElement.TryGetProperty("qrCode", out var qrc)) qrCode = qrc.GetString();
+
+        // 2) UAT/live thường bọc trong "data"
+        if (doc.RootElement.TryGetProperty("data", out var data))
+        {
+            if (data.TryGetProperty("qrUrl", out var d_qru)) qrUrl ??= d_qru.GetString();
+            if (data.TryGetProperty("qrCodeImage", out var d_qri)) qrImg ??= d_qri.GetString();
+            if (data.TryGetProperty("qrCode", out var d_qrc)) qrCode ??= d_qrc.GetString();
+        }
+
+        // Ưu tiên ảnh → nếu có ảnh là đã đủ “đẩy” cho FE
+        if (qrUrl is null && qrImg is null && qrCode is null)
+            throw new InvalidOperationException("Không tìm thấy trường QR trong phản hồi Tingee: " + raw);
+
+        return new TingeeQrResult { QrUrl = qrUrl, QrCodeImage = qrImg, QrCode = qrCode };
     }
 
     private static string ComputeHmacSha512Hex(string secret, string message)
@@ -143,5 +151,17 @@ public sealed class TingeeClient : ITingeeClient
 
 public interface ITingeeClient
 {
-    Task<string> CreateQrAsync(long bookingId, decimal amount, CancellationToken ct = default);
+    Task<TingeeQrResult> CreateQrAsync(long bookingId, decimal amount, CancellationToken ct = default);
+}
+
+public sealed class TingeeQrResult
+{
+    public string? QrUrl { get; init; }        // nếu Tingee có
+    public string? QrCodeImage { get; init; }  // data:image/png;base64,...
+    public string? QrCode { get; init; }       // chuỗi QR “000201...”
+
+    public static implicit operator TingeeQrResult(string v)
+    {
+        throw new NotImplementedException();
+    }
 }
