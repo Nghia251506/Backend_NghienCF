@@ -63,28 +63,43 @@ namespace Backend_Nghiencf.Data
             });
 
             modelBuilder.Entity<Booking>(e =>
-            {
-                e.ToTable("bookings");
-                e.HasKey(x => x.Id);
-                e.Property(x => x.ShowId).HasColumnName("show_id");
-                e.Property(x => x.TicketTypeId).HasColumnName("ticket_type_id");
-                e.Property(x => x.CustomerName).HasColumnName("customer_name");
-                e.Property(x => x.Phone).HasColumnName("phone");
-                e.Property(x => x.Quantity).HasColumnName("quantity");
-                e.Property(x => x.TotalAmount).HasColumnName("total_amount");
-                e.Property(x => x.PaymentStatus).HasColumnName("payment_status");
-                e.Property(x => x.PaymentTime).HasColumnName("payment_time");
+                {
+                    e.ToTable("bookings");
+                    e.HasKey(x => x.Id);
 
-                e.HasOne(x => x.TicketType)
-                    .WithMany() // nếu TicketType có ICollection<Booking> thì đổi lại
-                    .HasForeignKey(x => x.TicketTypeId)
-                    .OnDelete(DeleteBehavior.Restrict);
+                    // 🔴 BẮT BUỘC: map cột id và báo cho EF biết là identity
+                    e.Property(x => x.Id)
+                        .HasColumnName("id")
+                        .ValueGeneratedOnAdd()
+                        .UseMySqlIdentityColumn(); // Pomelo
 
-                e.HasOne(x => x.Show)
-                    .WithMany() // nếu Show có ICollection<Booking> thì đổi lại
-                    .HasForeignKey(x => x.ShowId)
-                    .OnDelete(DeleteBehavior.Restrict);
-            });
+                    e.Property(x => x.ShowId).HasColumnName("show_id");
+                    e.Property(x => x.TicketTypeId).HasColumnName("ticket_type_id");
+                    e.Property(x => x.CustomerName).HasColumnName("customer_name");
+                    e.Property(x => x.Phone).HasColumnName("phone");
+                    e.Property(x => x.Quantity).HasColumnName("quantity");
+
+                    e.Property(x => x.TotalAmount)
+                        .HasColumnName("total_amount")
+                        .HasColumnType("decimal(15,2)");
+
+                    e.Property(x => x.PaymentStatus).HasColumnName("payment_status");
+                    e.Property(x => x.PaymentTime).HasColumnName("payment_time");
+
+                    e.Property(x => x.CreatedAt)
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    e.HasOne(x => x.TicketType)
+                        .WithMany()
+                        .HasForeignKey(x => x.TicketTypeId)
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    e.HasOne(x => x.Show)
+                        .WithMany()
+                        .HasForeignKey(x => x.ShowId)
+                        .OnDelete(DeleteBehavior.Restrict);
+                });
 
             modelBuilder.Entity<TicketType>(e =>
             {

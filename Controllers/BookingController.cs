@@ -20,9 +20,9 @@ namespace Backend_Nghiencf.Controllers
             Ok(await _bookingService.GetAllSync());
 
         [HttpPost("create")]
-        public async Task<IActionResult> CreateBooking([FromBody] BookingDto dto)
+        public async Task<ActionResult<BookingResponseDto>> CreateBooking([FromBody] BookingDto dto, CancellationToken ct)
         {
-            var result = await _bookingService.CreateBookingAsync(dto);
+            var result = await _bookingService.CreateBookingAsync(dto, ct);
             return Ok(result);
         }
 

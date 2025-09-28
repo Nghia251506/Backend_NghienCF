@@ -18,6 +18,11 @@
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       }
+    },
+    "environmentVariables": {
+      "Tingee__ClientId": "",
+      "Tingee__SecretToken": "",
+      "Tingee__Environment": "Sandbox"
     }
   }
 }

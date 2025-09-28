@@ -5,7 +5,7 @@ namespace Backend_Nghiencf.Services
 {
     public interface IBookingService
     {
-        Task<BookingResponseDto> CreateBookingAsync(BookingDto dto);
+        Task<BookingResponseDto> CreateBookingAsync(BookingDto dto, CancellationToken ct = default);
         Task<IEnumerable<Booking>> GetAllSync();
         Task<bool> ConfirmPaymentAsync(int bookingId, string transactionId);
     }
