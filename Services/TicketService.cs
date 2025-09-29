@@ -1,5 +1,7 @@
 using System.Data;
-using Backend_Nghiencf.Data;           // AppDbContext
+using Backend_Nghiencf.Data;
+using Backend_Nghiencf.Dtos;
+using Backend_Nghiencf.Dtos.Common;       
 using Backend_Nghiencf.Dtos.Ticket;
 using Backend_Nghiencf.Models;
 using Microsoft.EntityFrameworkCore;
@@ -18,6 +20,64 @@ public sealed class TicketService : ITicketService
         _log = log;
     }
 
+    public async Task<PagedResult<TicketListItemDto>> GetAllAsync(TicketQuery query, CancellationToken ct = default)
+    {
+        // join Ticket + Booking để có thông tin khách & show
+        var q =
+            from t in _context.Tickets.AsNoTracking()
+            join b in _context.Bookings.AsNoTracking() on t.BookingId equals b.Id
+            select new TicketListItemDto
+            {
+                Id           = t.Id,
+                BookingId    = t.BookingId,
+                TicketCode   = t.TicketCode,
+                Status       = t.Status,
+                IssuedAt     = t.IssuedAt,
+                CustomerName = b.CustomerName,
+                Phone        = b.Phone,
+                PaymentTime  = b.PaymentTime,
+                ShowId       = b.ShowId
+            };
+
+        // lọc theo show
+        if (query.ShowId.HasValue)
+            q = q.Where(x => x.ShowId == query.ShowId.Value);
+
+        // lọc theo ticket code (contains, insensitive)
+        if (!string.IsNullOrWhiteSpace(query.TicketCode))
+        {
+            var code = query.TicketCode.Trim();
+            q = q.Where(x => x.TicketCode.Contains(code));
+        }
+
+        // lọc theo khoảng ngày (ưu tiên PaymentTime; nếu null có thể lọc theo IssuedAt)
+        if (query.DateFrom.HasValue)
+            q = q.Where(x => (x.PaymentTime ?? x.IssuedAt) >= query.DateFrom.Value);
+
+        if (query.DateTo.HasValue)
+            q = q.Where(x => (x.PaymentTime ?? x.IssuedAt) <= query.DateTo.Value);
+
+        // tổng trước khi phân trang
+        var total = await q.CountAsync(ct);
+
+        // sort mới nhất trước: ưu tiên PaymentTime desc, rồi IssuedAt desc
+        q = q.OrderByDescending(x => x.PaymentTime ?? x.IssuedAt)
+             .ThenByDescending(x => x.Id);
+
+        // phân trang
+        var page = query.Page <= 0 ? 1 : query.Page;
+        var size = (query.PageSize <= 0 || query.PageSize > 500) ? 10 : query.PageSize;
+
+        var items = await q.Skip((page - 1) * size)
+                           .Take(size)
+                           .ToListAsync(ct);
+
+        return new PagedResult<TicketListItemDto>
+        {
+            Items = items,
+            Total = total
+        };
+    }
     public async Task<TicketReadDto> CreateAsync(int bookingId, DateTime? eventDate, CancellationToken ct = default)
     {
         // Dùng connection của DbContext
@@ -55,11 +115,11 @@ public sealed class TicketService : ITicketService
                 .Where(x => x.Id == newId)
                 .Select(x => new TicketReadDto
                 {
-                    Id         = x.Id,
-                    BookingId  = x.BookingId,
+                    Id = x.Id,
+                    BookingId = x.BookingId,
                     TicketCode = x.TicketCode,
-                    Status     = x.Status,
-                    IssuedAt   = x.IssuedAt
+                    Status = x.Status,
+                    IssuedAt = x.IssuedAt
                 })
                 .SingleAsync(ct);
 
@@ -108,13 +168,13 @@ public sealed class TicketService : ITicketService
             .ToListAsync(ct);
     }
 
-    public async Task<bool> UpdateStatusAsync(int id, string status, CancellationToken ct = default)
+    public async Task<bool> UpdateStatusAsync(int id, TicketStatusUpdateDto dto, CancellationToken ct = default)
     {
         // tùy bạn validate status thuộc {valid, used, invalid,...}
         var t = await _context.Tickets.FindAsync(new object?[] { id }, ct);
         if (t == null) return false;
 
-        t.Status = status.Trim();
+        t.Status = dto.Status;
         await _context.SaveChangesAsync(ct);
         return true;
     }

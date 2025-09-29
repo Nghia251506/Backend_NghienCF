@@ -142,3 +142,4 @@ C:\Users\Administrator\Desktop\New folder\Backend_NghienCF\bin\Debug\net9.0\Micr
 C:\Users\Administrator\Desktop\New folder\Backend_NghienCF\bin\Debug\net9.0\Microsoft.IdentityModel.Protocols.OpenIdConnect.dll
 C:\Users\Administrator\Desktop\New folder\Backend_NghienCF\bin\Debug\net9.0\Microsoft.IdentityModel.Tokens.dll
 C:\Users\Administrator\Desktop\New folder\Backend_NghienCF\bin\Debug\net9.0\System.IdentityModel.Tokens.Jwt.dll
+C:\Users\Administrator\Desktop\New folder\Backend_NghienCF\bin\Debug\net9.0\Backend_Nghiencf.staticwebassets.runtime.json

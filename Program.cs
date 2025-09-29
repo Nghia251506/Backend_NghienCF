@@ -86,14 +86,14 @@ Console.WriteLine($"[CONF] Tingee:Bank:AccountNumber = '{builder.Configuration["
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-builder.Services.AddCors(opts =>
-{
-    opts.AddPolicy("AllowFrontend", p =>
+builder.Services.AddCors(o => 
+    o.AddPolicy("AllowFrontend", p => 
         p.WithOrigins("http://localhost:5173")
          .AllowAnyHeader()
          .AllowAnyMethod()
-         .AllowCredentials());
-});
+         .AllowCredentials()
+    )
+);
 
 var app = builder.Build();
 if (app.Environment.IsDevelopment())
@@ -105,4 +105,5 @@ app.UseCors("AllowFrontend");
 app.UseHttpsRedirection();
 app.UseAuthorization();
 app.MapControllers();
+app.UseStaticFiles();
 app.Run();
