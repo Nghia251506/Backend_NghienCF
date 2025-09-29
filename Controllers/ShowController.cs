@@ -25,12 +25,11 @@ namespace Backend_Nghiencf.Controllers
             var show = await _showService.GetShowByTitleAsync(title);
             return show == null ? NotFound() : Ok(show);
         }
-
         [HttpPost]
-        public async Task<IActionResult> Create(ShowCreateDto dto)
+        public async Task<ActionResult<ShowReadDto>> CreateShow([FromBody] ShowCreateDto dto)
         {
-            var emp = await _showService.CreateAsync(dto);
-            return CreatedAtAction(nameof(GetByTitle), new { title = emp.Title }, emp);
+            var result = await _showService.CreateAsync(dto);
+            return Ok(result);
         }
 
         [HttpPut("{title}")]

@@ -12,5 +12,10 @@ namespace Backend_Nghiencf.Models
         public string? BannerUrl { get; set; }
         public string? Capacity { get; set; }
         public string? Slogan { get; set; }
+
+        // public static implicit operator Show(Show v)
+        // {
+        //     throw new NotImplementedException();
+        // }
     }
 }

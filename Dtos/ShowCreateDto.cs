@@ -4,7 +4,7 @@ namespace Backend_Nghiencf.DTOs
     {
         public string Title { get; set; }
         public string? Description { get; set; }
-        public DateTime Date { get; set; }
+        public DateTime  Date { get; set; }
         public string? Location { get; set; }
         public string? BannerUrl { get; set; }
         public string? Capacity { get; set; }
