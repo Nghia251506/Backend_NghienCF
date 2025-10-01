@@ -1,19 +1,22 @@
-using Microsoft.EntityFrameworkCore;
 using Backend_Nghiencf.Data;
+using Microsoft.EntityFrameworkCore;
 
-public class PendingBookingExpiryService : BackgroundService
+public sealed class PendingBookingExpiryService : BackgroundService
 {
     private readonly IServiceScopeFactory _scopeFactory;
-    private readonly ILogger<PendingBookingExpiryService> _logger;
+    private readonly ILogger<PendingBookingExpiryService> _log;
+    private const int GraceMinutes = 15; // thời gian chờ thanh toán
 
-    public PendingBookingExpiryService(IServiceScopeFactory scopeFactory, ILogger<PendingBookingExpiryService> logger)
+    public PendingBookingExpiryService(IServiceScopeFactory scopeFactory, ILogger<PendingBookingExpiryService> log)
     {
         _scopeFactory = scopeFactory;
-        _logger = logger;
+        _log = log;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
+
         while (!stoppingToken.IsCancellationRequested)
         {
             try
@@ -21,34 +24,31 @@ public class PendingBookingExpiryService : BackgroundService
                 using var scope = _scopeFactory.CreateScope();
                 var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
-                var cutoff = DateTime.UtcNow.AddMinutes(-15);  // hay theo VN time nếu bạn lưu local
-                const int take = 500;
+                // So sánh trực tiếp với cutoff thay vì dùng EF.Functions
+                var cutoff = DateTime.UtcNow.AddMinutes(-GraceMinutes);
 
-                var sql = @"
-                            UPDATE bookings
-                            SET payment_status = 'failed'
-                            WHERE payment_status = 'pending'
-                            AND created_at < {0}
-                            LIMIT {1};"; // MySQL cho phép LIMIT trong UPDATE
+                var expired = await db.Bookings
+                    .Where(b => b.PaymentStatus == "pending"
+                             && b.CreatedAt != null
+                             && b.CreatedAt <= cutoff)
+                    .OrderBy(b => b.CreatedAt)
+                    .Take(200)
+                    .ToListAsync(stoppingToken);
 
-                // ❌ SAI: truyền stoppingToken lẫn vào tham số SQL
-                // await db.Database.ExecuteSqlRawAsync(sql, cutoff, take, stoppingToken);
+                foreach (var b in expired)
+                {
+                    b.PaymentStatus = "failed"; // hoặc "cancelled" theo quy ước của bạn
+                }
 
-                // ✅ ĐÚNG: tham số SQL trong mảng object[], token là tham số cuối
-                var affected = await db.Database.ExecuteSqlRawAsync(
-                    sql,
-                    new object[] { cutoff, take },
-                    stoppingToken
-                );
-
-                _logger.LogInformation("Expired {count} pending bookings older than {cutoff}", affected, cutoff);
+                if (expired.Count > 0)
+                    await db.SaveChangesAsync(stoppingToken);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Expire pending bookings failed");
+                _log.LogError(ex, "PendingBookingExpiryService loop error");
             }
 
-            await Task.Delay(TimeSpan.FromMinutes(1), stoppingToken);
+            await Task.Delay(TimeSpan.FromSeconds(30), stoppingToken);
         }
     }
 }

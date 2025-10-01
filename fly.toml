@@ -1,0 +1,39 @@
+# fly.toml app configuration file generated for musicshownghiencf on 2025-10-02T01:04:12+07:00
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
+
+app = 'musicshownghiencf'
+primary_region = 'sin'
+
+[build]
+  dockerfile = 'Dockerfile'
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_start_machines = true
+  auto_stop_machines = "off"   # <— tắt auto stop để debug
+  min_machines_running = 1
+  processes = ["app"]
+
+[[vm]]
+  memory = '2gb'
+  cpu_kind = 'shared'
+  cpus = 1
+[[mounts]]
+  source = "nghiencf_uploads"
+  destination = "/app/wwwroot/uploads"
+[env]
+  ASPNETCORE_URLS = "http://0.0.0.0:8080"
+  ASPNETCORE_ENVIRONMENT = "Production"
+  
+[checks]
+  [checks.http]
+    type = "http"
+    port = 8080
+    path = "/healthz"
+    interval = "15s"
+    timeout = "2s"
+    grace_period = "45s"
+

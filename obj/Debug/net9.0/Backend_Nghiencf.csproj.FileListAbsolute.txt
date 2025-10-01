@@ -147,3 +147,5 @@ C:\Users\Administrator\Desktop\New folder\Backend_NghienCF\obj\Debug\net9.0\refi
 C:\Users\Administrator\Desktop\New folder\Backend_NghienCF\obj\Debug\net9.0\Backend_Nghiencf.pdb
 C:\Users\Administrator\Desktop\New folder\Backend_NghienCF\obj\Debug\net9.0\Backend_Nghiencf.genruntimeconfig.cache
 C:\Users\Administrator\Desktop\New folder\Backend_NghienCF\obj\Debug\net9.0\ref\Backend_Nghiencf.dll
+C:\Users\Administrator\Desktop\New folder\Backend_NghienCF\bin\Debug\net9.0\DotNetEnv.dll
+C:\Users\Administrator\Desktop\New folder\Backend_NghienCF\bin\Debug\net9.0\Sprache.dll

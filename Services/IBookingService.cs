@@ -10,9 +10,4 @@ namespace Backend_Nghiencf.Services
         Task<bool> ConfirmPaymentAsync(int bookingId, string transactionId);
         // 
     }
-
-    public interface IBookingDevService
-    {
-        Task MarkPaidAndIssueTicketsAsync(int id, CancellationToken stoppingToken);
-    }
 }
