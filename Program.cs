@@ -151,15 +151,19 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 // ---------- CORS ----------
-builder.Services.AddCors(o =>
-    o.AddPolicy("AllowFrontend", p =>
-        p.WithOrigins(builder.Configuration["Frontend__Origin"] ?? "http://localhost:5173",
-        "https://chamkhoanhkhac.com")
-         .AllowAnyHeader()
-         .AllowAnyMethod()
-         .AllowCredentials()
-    )
-);
+var allowedOrigins = new[] {
+  "https://chamkhoanhkhac.com",
+  "https://www.chamkhoanhkhac.com",
+  "https://<your-vercel>.vercel.app" // nếu còn dùng
+};
+
+builder.Services.AddCors(opt =>
+{
+    opt.AddPolicy("AllowFrontend", policy =>
+        policy.WithOrigins(allowedOrigins)
+              .AllowAnyHeader()
+              .AllowAnyMethod());
+});
 
 var app = builder.Build();
 
