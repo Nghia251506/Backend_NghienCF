@@ -151,10 +151,12 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 // ---------- CORS ----------
-var allowedOrigins = new[] {
-  "https://chamkhoanhkhac.com",
-  "https://www.chamkhoanhkhac.com",
-  "https://<your-vercel>.vercel.app" // nếu còn dùng
+var allowedOrigins = new[]
+{
+    "https://chamkhoanhkhac.com",
+    "https://www.chamkhoanhkhac.com",
+    // nếu vẫn còn dùng preview trên Vercel, điền chính xác domain preview:
+    "https://frontend-nghien-cf.vercel.app"   // <-- sửa thành đúng project của bạn, hoặc bỏ dòng này nếu không dùng
 };
 
 builder.Services.AddCors(opt =>
@@ -162,7 +164,9 @@ builder.Services.AddCors(opt =>
     opt.AddPolicy("AllowFrontend", policy =>
         policy.WithOrigins(allowedOrigins)
               .AllowAnyHeader()
-              .AllowAnyMethod());
+              .AllowAnyMethod()
+              .AllowCredentials()            // <<< BẮT BUỘC khi client dùng withCredentials
+    );
 });
 
 var app = builder.Build();
@@ -187,10 +191,9 @@ using (var scope = app.Services.CreateScope())
 // tạm thời có thể comment dòng này khi test swagger để loại trừ redirect lỗi.
 // app.UseHttpsRedirection();
 
-app.UseStaticFiles();         // phục vụ /uploads/*
-app.UseCors("AllowFrontend");
-
-app.UseAuthentication();      // <<< THIẾU dòng này sẽ không kích hoạt JWT middleware
+app.UseStaticFiles();
+app.UseCors("AllowFrontend");     // CORS phải đứng TRƯỚC auth/authorization
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
