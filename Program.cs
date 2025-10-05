@@ -115,6 +115,7 @@ builder.Services.AddScoped<ITicketTypeService, TicketTypeService>();
 builder.Services.AddScoped<ITicketService, TicketService>();
 builder.Services.AddScoped<JwtHelper>();
 builder.Services.AddScoped<IBookingDevService, BookingDevService>();
+builder.Services.AddScoped<IThemeService, ThemeService>();
 builder.Services.AddHostedService<TicketBackfillService>();
 builder.Services.AddHostedService<PendingBookingExpiryService>();
 builder.Services.Configure<TingeeOptions>(builder.Configuration.GetSection("Tingee"));

@@ -13,28 +13,28 @@ namespace Backend_Nghiencf.Data
         public DbSet<Ticket> Tickets { get; set; }
         public DbSet<User> Users { get; set; }
         public DbSet<Setting> Settings { get; set; }
-        public DbSet<ThemeSetting> ThemeSettings => Set<ThemeSetting>();
+        public DbSet<ThemeSetting> ThemeSettings { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            base.OnModelCreating(modelBuilder);
-
-            modelBuilder.Entity<ThemeSetting>().HasData(new ThemeSetting
+            modelBuilder.Entity<ThemeSetting>(e =>
             {
-                Id = 1,
-                ShowId = null,
-                Primary = "#f59e0b",
-                Accent = "#ef4444",
-                Background = "#0a0a0a",
-                Surface = "#111827",
-                Text = "#ffffff",
-                Muted = "#9ca3af",
-                Navbar = "#000000",
-                ButtonFrom = "#f59e0b",
-                ButtonTo = "#f97316",
-                ScrollbarThumb = "#f59e0b",
-                ScrollbarTrack = "#1f2937",
-                UpdatedAt = DateTime.UtcNow
+                e.ToTable("themesettings");
+                e.HasKey(x => x.Id);
+                e.Property(x => x.ShowId).HasColumnName("ShowId").IsRequired();
+                e.Property(x => x.Primary).HasColumnName("PrimaryColor");
+                e.Property(x => x.Accent).HasColumnName("Accent");
+                e.Property(x => x.Background).HasColumnName("Background");
+                e.Property(x => x.Surface).HasColumnName("Surface");
+                e.Property(x => x.Text).HasColumnName("Text");
+                e.Property(x => x.Muted).HasColumnName("Muted");
+                e.Property(x => x.Navbar).HasColumnName("Navbar");
+                e.Property(x => x.ButtonFrom).HasColumnName("ButtonFrom");
+                e.Property(x => x.ButtonTo).HasColumnName("ButtonTo");
+                e.Property(x => x.ScrollbarThumb).HasColumnName("ScrollbarThumb");
+                e.Property(x => x.ScrollbarTrack).HasColumnName("ScrollbarTrack");
+                e.Property(x => x.UpdatedAt).HasColumnName("UpdatedAt");
+                e.Property(x => x.CreateAt).HasColumnName("CreatedAt");
             });
 
             modelBuilder.Entity<Show>(e =>
