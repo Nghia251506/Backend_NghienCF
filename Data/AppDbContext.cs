@@ -13,6 +13,7 @@ namespace Backend_Nghiencf.Data
         public DbSet<Ticket> Tickets { get; set; }
         public DbSet<User> Users { get; set; }
         public DbSet<Setting> Settings { get; set; }
+        public DbSet<ThemeSetting> ThemeSettings => Set<ThemeSetting>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
