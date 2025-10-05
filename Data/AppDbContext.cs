@@ -17,6 +17,25 @@ namespace Backend_Nghiencf.Data
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            base.OnModelCreating(modelBuilder);
+
+            modelBuilder.Entity<ThemeSetting>().HasData(new ThemeSetting
+            {
+                Id = 1,
+                ShowId = null,
+                Primary = "#f59e0b",
+                Accent = "#ef4444",
+                Background = "#0a0a0a",
+                Surface = "#111827",
+                Text = "#ffffff",
+                Muted = "#9ca3af",
+                Navbar = "#000000",
+                ButtonFrom = "#f59e0b",
+                ButtonTo = "#f97316",
+                ScrollbarThumb = "#f59e0b",
+                ScrollbarTrack = "#1f2937",
+                UpdatedAt = DateTime.UtcNow
+            });
 
             modelBuilder.Entity<Show>(e =>
             {
