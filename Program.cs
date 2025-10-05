@@ -190,7 +190,7 @@ using (var scope = app.Services.CreateScope())
 }
 // Nếu bạn CHƯA cấu hình HTTPS endpoint trong launchSettings / Kestrel,
 // tạm thời có thể comment dòng này khi test swagger để loại trừ redirect lỗi.
-// app.UseHttpsRedirection();
+app.UseHttpsRedirection();
 
 app.UseStaticFiles();
 app.UseCors("AllowFrontend");     // CORS phải đứng TRƯỚC auth/authorization
