@@ -22,7 +22,7 @@ namespace Backend_Nghiencf.Data
                 e.ToTable("themesettings");
                 e.HasKey(x => x.Id);
                 e.Property(x => x.ShowId).HasColumnName("ShowId").IsRequired();
-                e.Property(x => x.Primary).HasColumnName("PrimaryColor");
+                e.Property(x => x.PrimaryColor).HasColumnName("PrimaryColor");
                 e.Property(x => x.Accent).HasColumnName("Accent");
                 e.Property(x => x.Background).HasColumnName("Background");
                 e.Property(x => x.Surface).HasColumnName("Surface");
@@ -34,7 +34,7 @@ namespace Backend_Nghiencf.Data
                 e.Property(x => x.ScrollbarThumb).HasColumnName("ScrollbarThumb");
                 e.Property(x => x.ScrollbarTrack).HasColumnName("ScrollbarTrack");
                 e.Property(x => x.UpdatedAt).HasColumnName("UpdatedAt");
-                e.Property(x => x.CreateAt).HasColumnName("CreatedAt");
+                e.Property(x => x.CreatedAt).HasColumnName("CreatedAt");
             });
 
             modelBuilder.Entity<Show>(e =>
