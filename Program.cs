@@ -104,31 +104,27 @@ builder.Services.AddCors(opt =>
 });
 
 // ======== Auth ========
+var secret = builder.Configuration["Jwt:SecretKey"] 
+             ?? throw new Exception("Jwt:SecretKey missing");
 builder.Services
-    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options =>
-    {
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuer = false,
-            ValidateAudience = false,
-            ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret)),
-            ClockSkew = TimeSpan.Zero
-        };
-
-        // ✅ Đọc JWT từ cookie HttpOnly
-        options.Events = new JwtBearerEvents
-        {
-            OnMessageReceived = context =>
-            {
-                var token = context.Request.Cookies["atk"];
-                if (!string.IsNullOrEmpty(token))
-                    context.Token = token;
-                return Task.CompletedTask;
-            }
-        };
-    });
+  .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+  .AddJwtBearer(options =>
+  {
+    options.TokenValidationParameters = new TokenValidationParameters {
+      ValidateIssuer = false,
+      ValidateAudience = false,
+      ValidateIssuerSigningKey = true,
+      IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secret)),
+      ClockSkew = TimeSpan.Zero
+    };
+    options.Events = new JwtBearerEvents {
+      OnMessageReceived = ctx => {
+        var token = ctx.Request.Cookies["atk"];
+        if (!string.IsNullOrEmpty(token)) ctx.Token = token;
+        return Task.CompletedTask;
+      }
+    };
+  });
 
 builder.Services.AddAuthorization();
 
