@@ -205,6 +205,16 @@ using (var scope = app.Services.CreateScope())
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     db.Database.Migrate();
 }
+app.Use(async (ctx, next) =>
+{
+    if (!ctx.Request.Headers.ContainsKey("Authorization"))
+    {
+        var t = ctx.Request.Cookies["atk"];
+        if (!string.IsNullOrEmpty(t))
+            ctx.Request.Headers.Authorization = "Bearer " + t;
+    }
+    await next();
+});
 // Nếu bạn CHƯA cấu hình HTTPS endpoint trong launchSettings / Kestrel,
 // tạm thời có thể comment dòng này khi test swagger để loại trừ redirect lỗi.
 app.UseHttpsRedirection();
