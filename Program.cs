@@ -55,42 +55,7 @@ if (builder.Environment.IsDevelopment())
     catch { /* ignore */ }
 }
 
-builder.Services
-    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options =>
-    {
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuer = false,
-            ValidateAudience = false,
-            ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Secret"]!)
-            ),
-            ClockSkew = TimeSpan.Zero
-        };
 
-        // 👇 Quan trọng: đọc JWT từ cookie "atk"
-        options.Events = new JwtBearerEvents
-        {
-            OnMessageReceived = context =>
-            {
-                var token = context.Request.Cookies["atk"];
-                if (!string.IsNullOrEmpty(token))
-                    context.Token = token;
-                return Task.CompletedTask;
-            }
-        };
-    });
-
-builder.Services.AddAuthorization();
-
-// ---------- Controllers / JSON ----------
-builder.Services.AddControllers()
-    .AddJsonOptions(opt =>
-    {
-        opt.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
-    });
 
 // ---------- DbContext ----------
 var connStr = builder.Configuration.GetConnectionString("DefaultConnection")
@@ -167,7 +132,8 @@ var allowedOrigins = new[]
     "https://chamkhoanhkhac.com",
     "https://www.chamkhoanhkhac.com",
     // nếu vẫn còn dùng preview trên Vercel, điền chính xác domain preview:
-    "https://frontend-nghien-cf.vercel.app"   // <-- sửa thành đúng project của bạn, hoặc bỏ dòng này nếu không dùng
+    "https://frontend-nghien-cf.vercel.app",   // <-- sửa thành đúng project của bạn, hoặc bỏ dòng này nếu không dùng
+    "localhost:5173/"
 };
 
 builder.Services.AddCors(opt =>
@@ -179,6 +145,42 @@ builder.Services.AddCors(opt =>
               .AllowCredentials()            // <<< BẮT BUỘC khi client dùng withCredentials
     );
 });
+builder.Services
+    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = false,
+            ValidateAudience = false,
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Secret"]!)
+            ),
+            ClockSkew = TimeSpan.Zero
+        };
+
+        // 👇 Quan trọng: đọc JWT từ cookie "atk"
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context =>
+            {
+                var token = context.Request.Cookies["atk"];
+                if (!string.IsNullOrEmpty(token))
+                    context.Token = token;
+                return Task.CompletedTask;
+            }
+        };
+    });
+
+builder.Services.AddAuthorization();
+
+// ---------- Controllers / JSON ----------
+builder.Services.AddControllers()
+    .AddJsonOptions(opt =>
+    {
+        opt.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+    });
 
 var app = builder.Build();
 
