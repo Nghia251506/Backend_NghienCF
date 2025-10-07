@@ -90,7 +90,7 @@ var allowedOrigins = new[]
     "https://www.chamkhoanhkhac.com",
     "http://localhost:5173",
     "http://127.0.0.1:5173",
-    "https://frontend-nghien-cf.vercel.app"
+    "https://frontend-nghien-cf.vercel.app",
 };
 
 builder.Services.AddCors(opt =>
@@ -170,7 +170,7 @@ using (var scope = app.Services.CreateScope())
 // ======== Middlewares ========
 app.UseHttpsRedirection();
 app.UseStaticFiles();
-app.UseRouting(); 
+app.UseRouting();
 app.UseCors("AllowFrontend");      // ⚠️ phải đứng TRƯỚC auth
 app.UseAuthentication();
 app.UseAuthorization();
