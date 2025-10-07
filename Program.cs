@@ -111,20 +111,31 @@ builder.Services
   .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
   .AddJwtBearer(options =>
   {
-    options.TokenValidationParameters = new TokenValidationParameters {
-      ValidateIssuer = false,
-      ValidateAudience = false,
-      ValidateIssuerSigningKey = true,
-      IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secret)),
-      ClockSkew = TimeSpan.Zero
-    };
-    options.Events = new JwtBearerEvents {
-    OnMessageReceived = ctx => { /* như trên */ return Task.CompletedTask; },
-    OnAuthenticationFailed = ctx => {
-      Console.WriteLine("JWT failed: " + ctx.Exception.Message);
-      return Task.CompletedTask;
-      }
-    };
+      options.TokenValidationParameters = new TokenValidationParameters
+      {
+          ValidateIssuer = false,
+          ValidateAudience = false,
+          ValidateIssuerSigningKey = true,
+          IssuerSigningKey = new SymmetricSecurityKey(
+              Encoding.UTF8.GetBytes(builder.Configuration["Jwt:SecretKey"]!)
+          ),
+          ClockSkew = TimeSpan.Zero
+      };
+
+      options.Events = new JwtBearerEvents
+      {
+          OnMessageReceived = ctx =>
+          {
+              if (ctx.Request.Cookies.TryGetValue("atk", out var token))
+                  ctx.Token = token;          // 👈 QUAN TRỌNG: gán token từ cookie
+              return Task.CompletedTask;
+          },
+          OnAuthenticationFailed = ctx =>
+          {
+              Console.WriteLine("[JWT] failed: " + ctx.Exception.Message);
+              return Task.CompletedTask;
+          }
+      };
   });
 
 builder.Services.AddAuthorization();
