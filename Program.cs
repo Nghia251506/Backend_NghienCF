@@ -170,8 +170,8 @@ using (var scope = app.Services.CreateScope())
 // ======== Middlewares ========
 app.UseHttpsRedirection();
 app.UseStaticFiles();
+app.UseRouting(); 
 app.UseCors("AllowFrontend");      // ⚠️ phải đứng TRƯỚC auth
-app.UseRouting();   
 app.UseAuthentication();
 app.UseAuthorization();
 
