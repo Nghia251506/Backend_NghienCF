@@ -24,18 +24,19 @@ namespace Backend_Nghiencf.Helpers
 
             var role = string.IsNullOrWhiteSpace(user.Role) ? "User" : user.Role; // Chú ý hoa-thường
 
-            var claims = new List<Claim>
+            var claims = new[]
             {
-                // Các claim “chuẩn”
+                // 👇 dùng claim chuẩn để ASP.NET nhận diện user id
                 new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                new Claim(ClaimTypes.Name, user.UserName ?? string.Empty),
-                new Claim(ClaimTypes.Role, role),
-
-                // Giữ lại những claim bạn đang dùng (nếu FE/BE khác chỗ dựa vào)
+            
+                // nếu bạn vẫn muốn giữ "sub" thì có thể thêm, nhưng NameIdentifier là chuẩn hơn
                 new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
-                new Claim("username", user.UserName ?? string.Empty),
-                new Claim("email", user.Email ?? string.Empty),
-                new Claim("role", role) // legacy/custom
+            
+                new Claim("username", user.UserName ?? ""),
+                new Claim("email", user.Email ?? ""),
+            
+                // 👇 QUAN TRỌNG: role phải dùng ClaimTypes.Role để [Authorize(Roles="...")] hoạt động
+                new Claim(ClaimTypes.Role, string.IsNullOrWhiteSpace(user.Role) ? "User" : user.Role),
             };
 
             var token = new JwtSecurityToken(
