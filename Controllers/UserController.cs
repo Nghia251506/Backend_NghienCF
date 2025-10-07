@@ -69,7 +69,7 @@ namespace Backend_Nghiencf.Controllers
             {
                 HttpOnly = true,
                 Secure = true,              // nhớ dùng HTTPS ở production
-                SameSite = SameSiteMode.Lax,  // hoặc Strict nếu không cần cross-site
+                SameSite = SameSiteMode.None,  // hoặc Strict nếu không cần cross-site
                 Expires = DateTimeOffset.UtcNow.AddHours(1),
                 IsEssential = true,
                 Path = "/"
