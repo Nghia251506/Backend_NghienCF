@@ -34,7 +34,7 @@ namespace Backend_Nghiencf.Helpers
                 new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
                 new Claim("username", user.UserName ?? ""),
                 new Claim("email", user.Email ?? ""),
-                // new Claim("role", user.Role ?? "user"), // giả sử có field Role
+                new Claim("role", user.Role ?? "user"), // giả sử có field Role
             };
 
             var token = new JwtSecurityToken(
