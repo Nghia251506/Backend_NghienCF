@@ -20,36 +20,40 @@ namespace Backend_Nghiencf.Controllers
             _context = context;
         }
 
-        // POST: api/User
+        // Tạo user (tùy bạn có muốn bắt buộc admin hay không)
+        // [Authorize(Roles = "Admin")]
         [HttpPost]
         public async Task<ActionResult<UserReadDto>> CreateUser([FromBody] UserCreateDto dto)
         {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
+            if (!ModelState.IsValid) return BadRequest(ModelState);
 
             var user = await _userService.CreateUserAsync(dto);
             return CreatedAtAction(nameof(GetUserById), new { id = user.Id }, user);
         }
 
-        // GET: api/User/{id}
         [HttpGet("{id}")]
         public async Task<ActionResult<UserReadDto>> GetUserById(int id)
         {
-            // hiện tại service bạn chưa có GetUserById
-            // mình viết tạm return NotFound() cho bạn
+            // TODO: implement trong service
             return NotFound("Chưa implement GetUserById trong service.");
         }
 
+        /// <summary>
+        /// Trả thông tin user hiện tại dựa trên JWT trong cookie 'atk'
+        /// </summary>
         [HttpGet("me")]
         [Authorize]
         public async Task<ActionResult<UserReadDto>> Me()
         {
-            var userId = User.FindFirst("sub")?.Value // hoặc ClaimTypes.NameIdentifier
-                       ?? User.FindFirst("id")?.Value;
+            // Lấy id từ các dạng claim phổ biến:
+            var idClaim =
+                User.FindFirst(ClaimTypes.NameIdentifier) ??
+                User.FindFirst("sub") ??
+                User.FindFirst("id");
 
-            if (string.IsNullOrEmpty(userId)) return Unauthorized();
+            if (idClaim == null || !int.TryParse(idClaim.Value, out var id))
+                return Unauthorized();
 
-            var id = int.Parse(userId);
             var user = await _context.Users.FindAsync(id);
             if (user == null) return Unauthorized();
 
@@ -61,35 +65,56 @@ namespace Backend_Nghiencf.Controllers
             });
         }
 
-        // POST: api/User/login
+        /// <summary>
+        /// Đăng nhập: ghi JWT vào cookie HttpOnly "atk" + trả về thông tin user
+        /// </summary>
         [HttpPost("login")]
+        [AllowAnonymous]
         public async Task<ActionResult<UserReadDto>> Login([FromBody] UserLoginDto dto)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
-            var res = await _userService.LoginAsync(dto); // => AuthResponse { Token, User } hoặc null
+            var res = await _userService.LoginAsync(dto); // AuthResponse { Token, User } hoặc null
             if (res is null) return Unauthorized("Sai tên đăng nhập hoặc mật khẩu.");
 
-            // Ghi JWT vào cookie HttpOnly
+            // Cookie options — đảm bảo hoạt động trên prod (HTTPS, cross-site) và dev (HTTP localhost)
             var cookieOpt = new CookieOptions
             {
                 HttpOnly = true,
-                Secure = true,              // nhớ dùng HTTPS ở production
-                SameSite = SameSiteMode.None,  // hoặc Strict nếu không cần cross-site
+                Secure = Request.IsHttps || true,     // Railway dùng HTTPS: true; dev http: có thể đổi thành Request.IsHttps
+                SameSite = SameSiteMode.None,         // cross-site XHR cần None
                 Expires = DateTimeOffset.UtcNow.AddHours(1),
                 IsEssential = true,
                 Path = "/"
+                // KHÔNG set Domain trừ khi bạn biết chính xác cần dùng (đặt sai domain sẽ không lưu)
             };
+
             Response.Cookies.Append("atk", res.Token, cookieOpt);
 
-            // Trả về info user (không cần trả token cho FE nữa)
-            return Ok(res.User);
+            // Trả info user cho FE (FE không cần token nữa vì cookie đã có)
+            return Ok(new UserReadDto
+            {
+                Id = res.User.Id,
+                UserName = res.User.UserName,
+                Role = res.User.Role
+            });
         }
 
+        /// <summary>
+        /// Đăng xuất: xóa cookie "atk"
+        /// </summary>
         [HttpPost("logout")]
         public IActionResult Logout()
         {
-            Response.Cookies.Delete("atk", new CookieOptions { Path = "/" });
+            // Dùng cùng Path/SameSite/Secure như lúc set để chắc chắn xóa được
+            Response.Cookies.Delete("atk", new CookieOptions
+            {
+                Path = "/",
+                HttpOnly = true,
+                SameSite = SameSiteMode.None,
+                Secure = Request.IsHttps || true
+            });
+
             return NoContent();
         }
     }
