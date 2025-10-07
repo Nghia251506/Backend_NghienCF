@@ -1,5 +1,7 @@
+using System.Security.Claims;
 using Backend_Nghiencf.DTOs;
 using Backend_Nghiencf.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Backend_Nghiencf.Controllers
@@ -33,6 +35,24 @@ namespace Backend_Nghiencf.Controllers
             // hiện tại service bạn chưa có GetUserById
             // mình viết tạm return NotFound() cho bạn
             return NotFound("Chưa implement GetUserById trong service.");
+        }
+
+        [HttpGet("me")]
+        [Authorize] // yêu cầu có JWT hợp lệ (đọc từ cookie atk qua JwtBearer Events)
+        public ActionResult<UserReadDto> Me()
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var userName = User.Identity?.Name ?? User.FindFirstValue("unique_name");
+            var role = User.FindFirstValue(ClaimTypes.Role) ?? "user";
+
+            if (string.IsNullOrEmpty(userId)) return Unauthorized();
+
+            return Ok(new UserReadDto
+            {
+                Id = (int)(long.TryParse(userId, out var id) ? id : 0),
+                UserName = userName ?? "",
+                Role = role
+            });
         }
 
         // POST: api/User/login
