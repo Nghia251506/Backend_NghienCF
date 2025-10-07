@@ -85,7 +85,6 @@ namespace Backend_Nghiencf.Controllers
                 SameSite = SameSiteMode.None,         // cross-site XHR cần None
                 Expires = DateTimeOffset.UtcNow.AddHours(1),
                 IsEssential = true,
-                IsPartitioned = true,
                 Path = "/"
                 // KHÔNG set Domain trừ khi bạn biết chính xác cần dùng (đặt sai domain sẽ không lưu)
             };
