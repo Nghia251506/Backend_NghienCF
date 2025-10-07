@@ -118,10 +118,10 @@ builder.Services
       ClockSkew = TimeSpan.Zero
     };
     options.Events = new JwtBearerEvents {
-      OnMessageReceived = ctx => {
-        var token = ctx.Request.Cookies["atk"];
-        if (!string.IsNullOrEmpty(token)) ctx.Token = token;
-        return Task.CompletedTask;
+    OnMessageReceived = ctx => { /* như trên */ return Task.CompletedTask; },
+    OnAuthenticationFailed = ctx => {
+      Console.WriteLine("JWT failed: " + ctx.Exception.Message);
+      return Task.CompletedTask;
       }
     };
   });
