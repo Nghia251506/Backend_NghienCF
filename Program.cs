@@ -10,6 +10,7 @@ using System.Reflection;
 using Microsoft.Extensions.Logging;
 using System.Text.Json.Serialization;
 using DotNetEnv;
+using System.Security.Claims;
 
 try
 {
@@ -118,7 +119,8 @@ builder.Services
           IssuerSigningKey = new SymmetricSecurityKey(
               Encoding.UTF8.GetBytes(builder.Configuration["Jwt:SecretKey"]!)
           ),
-          ClockSkew = TimeSpan.Zero
+          ClockSkew = TimeSpan.Zero,
+          RoleClaimType = ClaimTypes.Role,
       };
 
       options.Events = new JwtBearerEvents
