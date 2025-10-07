@@ -41,10 +41,30 @@ namespace Backend_Nghiencf.Controllers
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
-            var user = await _userService.LoginAsync(dto);
-            if (user == null) return Unauthorized("Sai tên đăng nhập hoặc mật khẩu.");
+            var res = await _userService.LoginAsync(dto); // => AuthResponse { Token, User } hoặc null
+            if (res is null) return Unauthorized("Sai tên đăng nhập hoặc mật khẩu.");
 
-            return Ok(user);
+            // Ghi JWT vào cookie HttpOnly
+            var cookieOpt = new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true,              // nhớ dùng HTTPS ở production
+                SameSite = SameSiteMode.Lax,  // hoặc Strict nếu không cần cross-site
+                Expires = DateTimeOffset.UtcNow.AddHours(1),
+                IsEssential = true,
+                Path = "/"
+            };
+            Response.Cookies.Append("atk", res.Token, cookieOpt);
+
+            // Trả về info user (không cần trả token cho FE nữa)
+            return Ok(res.User);
+        }
+
+        [HttpPost("logout")]
+        public IActionResult Logout()
+        {
+            Response.Cookies.Delete("atk", new CookieOptions { Path = "/" });
+            return NoContent();
         }
     }
 }

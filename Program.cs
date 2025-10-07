@@ -60,17 +60,33 @@ builder.Services.AddAuthentication(opt =>
     opt.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
     opt.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
 })
-.AddJwtBearer(opt =>
+.AddJwtBearer(o =>
 {
-    opt.TokenValidationParameters = new TokenValidationParameters
+    o.TokenValidationParameters = new TokenValidationParameters
     {
         ValidateIssuer = true,
         ValidateAudience = true,
-        ValidateLifetime = true,
         ValidateIssuerSigningKey = true,
-        ValidIssuer = jwtSettings["Issuer"],
-        ValidAudience = jwtSettings["Audience"],
-        IssuerSigningKey = new SymmetricSecurityKey(key)
+        ValidIssuer   = builder.Configuration["Jwt:Issuer"],
+        ValidAudience = builder.Configuration["Jwt:Audience"],
+        IssuerSigningKey = new SymmetricSecurityKey(
+            Encoding.UTF8.GetBytes(builder.Configuration["Jwt:SecretKey"])
+        ),
+        ClockSkew = TimeSpan.Zero
+    };
+
+    o.Events = new JwtBearerEvents
+    {
+        OnMessageReceived = ctx =>
+        {
+            if (string.IsNullOrEmpty(ctx.Token))
+            {
+                var cookie = ctx.HttpContext.Request.Cookies["atk"];
+                if (!string.IsNullOrEmpty(cookie))
+                    ctx.Token = cookie;
+            }
+            return Task.CompletedTask;
+        }
     };
 });
 
@@ -120,6 +136,7 @@ builder.Services.AddHostedService<TicketBackfillService>();
 builder.Services.AddHostedService<PendingBookingExpiryService>();
 builder.Services.Configure<TingeeOptions>(builder.Configuration.GetSection("Tingee"));
 builder.Services.AddHttpClient<ITingeeClient, TingeeClient>();
+builder.Services.AddSingleton<ITokenService, TokenService>();
 
 // ---------- Swagger ----------
 builder.Services.AddEndpointsApiExplorer();
