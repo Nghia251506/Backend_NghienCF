@@ -10,6 +10,7 @@ C:\Users\Administrator\Desktop\New folder\Backend_NghienCF\bin\Debug\net9.0\Back
 C:\Users\Administrator\Desktop\New folder\Backend_NghienCF\bin\Debug\net9.0\AutoMapper.dll
 C:\Users\Administrator\Desktop\New folder\Backend_NghienCF\bin\Debug\net9.0\AutoMapper.Extensions.Microsoft.DependencyInjection.dll
 C:\Users\Administrator\Desktop\New folder\Backend_NghienCF\bin\Debug\net9.0\BCrypt.Net-Next.dll
+C:\Users\Administrator\Desktop\New folder\Backend_NghienCF\bin\Debug\net9.0\DotNetEnv.dll
 C:\Users\Administrator\Desktop\New folder\Backend_NghienCF\bin\Debug\net9.0\Humanizer.dll
 C:\Users\Administrator\Desktop\New folder\Backend_NghienCF\bin\Debug\net9.0\Microsoft.AspNetCore.Authentication.JwtBearer.dll
 C:\Users\Administrator\Desktop\New folder\Backend_NghienCF\bin\Debug\net9.0\Microsoft.AspNetCore.JsonPatch.dll
@@ -49,6 +50,7 @@ C:\Users\Administrator\Desktop\New folder\Backend_NghienCF\bin\Debug\net9.0\MySq
 C:\Users\Administrator\Desktop\New folder\Backend_NghienCF\bin\Debug\net9.0\Newtonsoft.Json.dll
 C:\Users\Administrator\Desktop\New folder\Backend_NghienCF\bin\Debug\net9.0\Newtonsoft.Json.Bson.dll
 C:\Users\Administrator\Desktop\New folder\Backend_NghienCF\bin\Debug\net9.0\Pomelo.EntityFrameworkCore.MySql.dll
+C:\Users\Administrator\Desktop\New folder\Backend_NghienCF\bin\Debug\net9.0\Sprache.dll
 C:\Users\Administrator\Desktop\New folder\Backend_NghienCF\bin\Debug\net9.0\Swashbuckle.AspNetCore.Swagger.dll
 C:\Users\Administrator\Desktop\New folder\Backend_NghienCF\bin\Debug\net9.0\Swashbuckle.AspNetCore.SwaggerGen.dll
 C:\Users\Administrator\Desktop\New folder\Backend_NghienCF\bin\Debug\net9.0\Swashbuckle.AspNetCore.SwaggerUI.dll
@@ -147,5 +149,3 @@ C:\Users\Administrator\Desktop\New folder\Backend_NghienCF\obj\Debug\net9.0\refi
 C:\Users\Administrator\Desktop\New folder\Backend_NghienCF\obj\Debug\net9.0\Backend_Nghiencf.pdb
 C:\Users\Administrator\Desktop\New folder\Backend_NghienCF\obj\Debug\net9.0\Backend_Nghiencf.genruntimeconfig.cache
 C:\Users\Administrator\Desktop\New folder\Backend_NghienCF\obj\Debug\net9.0\ref\Backend_Nghiencf.dll
-C:\Users\Administrator\Desktop\New folder\Backend_NghienCF\bin\Debug\net9.0\DotNetEnv.dll
-C:\Users\Administrator\Desktop\New folder\Backend_NghienCF\bin\Debug\net9.0\Sprache.dll
