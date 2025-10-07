@@ -92,6 +92,7 @@ var allowedOrigins = new[]
     "http://localhost:5173",
     "http://127.0.0.1:5173",
     "https://frontend-nghien-cf.vercel.app",
+    "https://chamkhoanhkhac.com/swagger"
 };
 
 builder.Services.AddCors(opt =>
