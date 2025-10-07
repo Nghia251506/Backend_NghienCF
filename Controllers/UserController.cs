@@ -3,6 +3,7 @@ using Backend_Nghiencf.DTOs;
 using Backend_Nghiencf.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Backend_Nghiencf.Data;
 
 namespace Backend_Nghiencf.Controllers
 {
@@ -11,10 +12,12 @@ namespace Backend_Nghiencf.Controllers
     public class UserController : ControllerBase
     {
         private readonly IUserService _userService;
+        private readonly AppDbContext _context;
 
-        public UserController(IUserService userService)
+        public UserController(IUserService userService, AppDbContext context)
         {
             _userService = userService;
+            _context = context;
         }
 
         // POST: api/User
@@ -38,20 +41,23 @@ namespace Backend_Nghiencf.Controllers
         }
 
         [HttpGet("me")]
-        [Authorize] // yêu cầu có JWT hợp lệ (đọc từ cookie atk qua JwtBearer Events)
-        public ActionResult<UserReadDto> Me()
+        [Authorize]
+        public async Task<ActionResult<UserReadDto>> Me()
         {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var userName = User.Identity?.Name ?? User.FindFirstValue("unique_name");
-            var role = User.FindFirstValue(ClaimTypes.Role) ?? "user";
+            var userId = User.FindFirst("sub")?.Value // hoặc ClaimTypes.NameIdentifier
+                       ?? User.FindFirst("id")?.Value;
 
             if (string.IsNullOrEmpty(userId)) return Unauthorized();
 
+            var id = int.Parse(userId);
+            var user = await _context.Users.FindAsync(id);
+            if (user == null) return Unauthorized();
+
             return Ok(new UserReadDto
             {
-                Id = (int)(long.TryParse(userId, out var id) ? id : 0),
-                UserName = userName ?? "",
-                Role = role
+                Id = user.Id,
+                UserName = user.UserName,
+                Role = user.Role
             });
         }
 

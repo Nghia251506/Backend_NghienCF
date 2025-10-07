@@ -55,40 +55,33 @@ if (builder.Environment.IsDevelopment())
     catch { /* ignore */ }
 }
 
-builder.Services.AddAuthentication(opt =>
-{
-    opt.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    opt.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-})
-.AddJwtBearer(o =>
-{
-    o.TokenValidationParameters = new TokenValidationParameters
+builder.Services
+    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
     {
-        ValidateIssuer = true,
-        ValidateAudience = true,
-        ValidateIssuerSigningKey = true,
-        ValidIssuer   = builder.Configuration["Jwt:Issuer"],
-        ValidAudience = builder.Configuration["Jwt:Audience"],
-        IssuerSigningKey = new SymmetricSecurityKey(
-            Encoding.UTF8.GetBytes(builder.Configuration["Jwt:SecretKey"])
-        ),
-        ClockSkew = TimeSpan.Zero
-    };
-
-    o.Events = new JwtBearerEvents
-    {
-        OnMessageReceived = ctx =>
+        options.TokenValidationParameters = new TokenValidationParameters
         {
-            if (string.IsNullOrEmpty(ctx.Token))
+            ValidateIssuer = false,
+            ValidateAudience = false,
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Secret"]!)
+            ),
+            ClockSkew = TimeSpan.Zero
+        };
+
+        // 👇 Quan trọng: đọc JWT từ cookie "atk"
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context =>
             {
-                var cookie = ctx.HttpContext.Request.Cookies["atk"];
-                if (!string.IsNullOrEmpty(cookie))
-                    ctx.Token = cookie;
+                var token = context.Request.Cookies["atk"];
+                if (!string.IsNullOrEmpty(token))
+                    context.Token = token;
+                return Task.CompletedTask;
             }
-            return Task.CompletedTask;
-        }
-    };
-});
+        };
+    });
 
 builder.Services.AddAuthorization();
 
