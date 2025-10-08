@@ -239,6 +239,7 @@ builder.Services.AddScoped<IThemeService, ThemeService>();
 builder.Services.AddHostedService<TicketBackfillService>();
 builder.Services.AddHostedService<PendingBookingExpiryService>();
 builder.Services.AddHttpClient<ITingeeClient, TingeeClient>();
+builder.Services.Configure<TingeeOptions>(builder.Configuration.GetSection("Tingee"));
 // builder.Services.AddSingleton<ITokenService, TokenService>();
 
 // ======== Swagger ========
