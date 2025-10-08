@@ -322,6 +322,19 @@ builder.Services.AddControllers()
     });
 
 var app = builder.Build();
+app.UseExceptionHandler(errApp =>
+{
+    errApp.Run(async ctx =>
+    {
+        var feat = ctx.Features.Get<Microsoft.AspNetCore.Diagnostics.IExceptionHandlerPathFeature>();
+        Console.WriteLine("[EX] PATH=" + feat?.Path);
+        Console.WriteLine("[EX] " + feat?.Error); // ⬅️ lên Railway Logs
+
+        ctx.Response.StatusCode = StatusCodes.Status500InternalServerError;
+        ctx.Response.ContentType = "application/json";
+        await ctx.Response.WriteAsync("""{"error":"internal"}""");
+    });
+});
 
 // ======== Dev Swagger ========
 if (app.Environment.IsDevelopment())
