@@ -1,9 +1,6 @@
-using System.Security.Claims;
 using Backend_Nghiencf.DTOs;
 using Backend_Nghiencf.Services;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Backend_Nghiencf.Data;
 
 namespace Backend_Nghiencf.Controllers
 {
@@ -12,96 +9,42 @@ namespace Backend_Nghiencf.Controllers
     public class UserController : ControllerBase
     {
         private readonly IUserService _userService;
-        private readonly AppDbContext _context;
 
-        public UserController(IUserService userService, AppDbContext context)
+        public UserController(IUserService userService)
         {
             _userService = userService;
-            _context = context;
         }
 
-        // Tạo user (tùy bạn có muốn bắt buộc admin hay không)
-        // [Authorize(Roles = "Admin")]
+        // POST: api/User
         [HttpPost]
         public async Task<ActionResult<UserReadDto>> CreateUser([FromBody] UserCreateDto dto)
         {
-            if (!ModelState.IsValid) return BadRequest(ModelState);
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
 
             var user = await _userService.CreateUserAsync(dto);
             return CreatedAtAction(nameof(GetUserById), new { id = user.Id }, user);
         }
 
+        // GET: api/User/{id}
         [HttpGet("{id}")]
         public async Task<ActionResult<UserReadDto>> GetUserById(int id)
         {
-            // TODO: implement trong service
+            // hiện tại service bạn chưa có GetUserById
+            // mình viết tạm return NotFound() cho bạn
             return NotFound("Chưa implement GetUserById trong service.");
         }
 
-        /// <summary>
-        /// Trả thông tin user hiện tại dựa trên JWT trong cookie 'atk'
-        /// </summary>
-        // [HttpGet("me")]
-        // [Authorize]
-        // public async Task<ActionResult<UserReadDto>> Me()
-        // {
-        //     // Lấy id từ các dạng claim phổ biến:
-        //     var idClaim =
-        //         User.FindFirst(ClaimTypes.NameIdentifier) ??
-        //         User.FindFirst("sub") ??
-        //         User.FindFirst("id");
-
-        //     if (idClaim == null || !int.TryParse(idClaim.Value, out var id))
-        //         return Unauthorized();
-
-        //     var user = await _context.Users.FindAsync(id);
-        //     if (user == null) return Unauthorized();
-
-        //     return Ok(new UserReadDto
-        //     {
-        //         Id = user.Id,
-        //         UserName = user.UserName,
-        //         Role = user.Role
-        //     });
-        // }
-
-        /// <summary>
-        /// Đăng nhập: ghi JWT vào cookie HttpOnly "atk" + trả về thông tin user
-        /// </summary>
+        // POST: api/User/login
         [HttpPost("login")]
-        [AllowAnonymous]
         public async Task<ActionResult<UserReadDto>> Login([FromBody] UserLoginDto dto)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
-            var res = await _userService.LoginAsync(dto); // AuthResponse { Token, User } hoặc null
-            if (res is null) return Unauthorized("Sai tên đăng nhập hoặc mật khẩu.");
+            var user = await _userService.LoginAsync(dto);
+            if (user == null) return Unauthorized("Sai tên đăng nhập hoặc mật khẩu.");
 
-            // Trả info user cho FE (FE không cần token nữa vì cookie đã có)
-            return Ok(new UserReadDto
-            {
-                Id = res.User.Id,
-                UserName = res.User.UserName,
-                Role = res.User.Role
-            });
+            return Ok(user);
         }
-
-        /// <summary>
-        /// Đăng xuất: xóa cookie "atk"
-        /// </summary>
-        // [HttpPost("logout")]
-        // public IActionResult Logout()
-        // {
-        //     // Dùng cùng Path/SameSite/Secure như lúc set để chắc chắn xóa được
-        //     Response.Cookies.Delete("atk", new CookieOptions
-        //     {
-        //         Path = "/",
-        //         HttpOnly = true,
-        //         SameSite = SameSiteMode.None,
-        //         Secure = Request.IsHttps || true
-        //     });
-
-        //     return NoContent();
-        // }
     }
 }
