@@ -196,17 +196,18 @@ using Microsoft.Extensions.Logging;
 using System.Text.Json.Serialization;
 using DotNetEnv;
 
-try { Env.Load(); } catch { }
+try
+{
+    Env.Load(); // đọc file .env nếu có
+}
+catch { }
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ======== Host / Port ========
+// ======== JWT ========
+var jwtSecret = builder.Configuration["Jwt:SecretKey"] ?? throw new Exception("Missing Jwt:SecretKey");
 var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
 builder.WebHost.ConfigureKestrel(o => o.ListenAnyIP(int.Parse(port)));
-
-// ======== JWT ========
-var jwtSecret = builder.Configuration["Jwt:SecretKey"] 
-    ?? throw new Exception("Missing Jwt:SecretKey");
 
 // ======== DB ========
 var connStr = builder.Configuration.GetConnectionString("DefaultConnection")
@@ -219,6 +220,7 @@ builder.Services.AddDbContext<AppDbContext>(opt =>
         mySql.MigrationsAssembly(typeof(AppDbContext).Assembly.FullName);
         mySql.EnableRetryOnFailure(5, TimeSpan.FromSeconds(10), null);
     });
+
     opt.EnableDetailedErrors();
     opt.EnableSensitiveDataLogging();
     opt.LogTo(Console.WriteLine, LogLevel.Information);
@@ -246,7 +248,9 @@ builder.Services.AddSwaggerGen(c =>
     var xmlName = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
     var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlName);
     if (File.Exists(xmlPath))
+    {
         c.IncludeXmlComments(xmlPath, includeControllerXmlComments: true);
+    }
 
     var jwtScheme = new Microsoft.OpenApi.Models.OpenApiSecurityScheme
     {
@@ -264,7 +268,7 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-// ======== CORS (KHÔNG credentials) ========
+// ======== CORS ========
 var allowedOrigins = new[]
 {
     "https://chamkhoanhkhac.com",
@@ -272,7 +276,7 @@ var allowedOrigins = new[]
     "http://localhost:5173",
     "http://127.0.0.1:5173",
     "https://frontend-nghien-cf.vercel.app",
-    // Swagger UI của backend không cần CORS để gọi chính backend
+    "https://api.chamkhoanhkhac.com"
 };
 
 builder.Services.AddCors(opt =>
@@ -281,26 +285,42 @@ builder.Services.AddCors(opt =>
         policy.WithOrigins(allowedOrigins)
               .AllowAnyHeader()
               .AllowAnyMethod()
-              // KHÔNG dùng AllowCredentials() vì không dùng cookie nữa
+              .AllowCredentials()
     );
 });
 
-// ======== Auth: chỉ header Bearer ========
+// ======== Auth ========
+var secret = builder.Configuration["Jwt:SecretKey"] 
+             ?? throw new Exception("Jwt:SecretKey missing");
 builder.Services
   .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
   .AddJwtBearer(options =>
   {
-      options.TokenValidationParameters = new TokenValidationParameters
-      {
-          ValidateIssuer = false,
-          ValidateAudience = false,
-          ValidateIssuerSigningKey = true,
-          IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret)),
-          ClockSkew = TimeSpan.Zero,
-          RoleClaimType = System.Security.Claims.ClaimTypes.Role,
-      };
-      // Không cần Events.OnMessageReceived để đọc cookie nữa
-      // Mặc định sẽ đọc Authorization: Bearer <token>
+    options.TokenValidationParameters = new TokenValidationParameters {
+      ValidateIssuer = false,
+      ValidateAudience = false,
+      ValidateIssuerSigningKey = true,
+      IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secret)),
+      ClockSkew = TimeSpan.Zero
+    };
+    options.Events = new JwtBearerEvents {
+    OnMessageReceived = ctx => { /* như trên */ return Task.CompletedTask; },
+    OnAuthenticationFailed = ctx => {
+      Console.WriteLine("JWT failed: " + ctx.Exception.Message);
+      return Task.CompletedTask;
+      }
+    };
+
+
+
+
+
+
+
+
+
+
+
   });
 
 builder.Services.AddAuthorization();
@@ -336,8 +356,7 @@ using (var scope = app.Services.CreateScope())
 // ======== Middlewares ========
 app.UseHttpsRedirection();
 app.UseStaticFiles();
-app.UseRouting();
-app.UseCors("AllowFrontend");   // phải trước auth
+app.UseCors("AllowFrontend");      // ⚠️ phải đứng TRƯỚC auth
 app.UseAuthentication();
 app.UseAuthorization();
 
