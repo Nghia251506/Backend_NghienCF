@@ -26,17 +26,11 @@ namespace Backend_Nghiencf.Helpers
 
             var claims = new[]
             {
-                // 👇 dùng claim chuẩn để ASP.NET nhận diện user id
-                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-            
-                // nếu bạn vẫn muốn giữ "sub" thì có thể thêm, nhưng NameIdentifier là chuẩn hơn
-                new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
-            
+                
                 new Claim("username", user.UserName ?? ""),
                 new Claim("email", user.Email ?? ""),
             
-                // 👇 QUAN TRỌNG: role phải dùng ClaimTypes.Role để [Authorize(Roles="...")] hoạt động
-                new Claim(ClaimTypes.Role, string.IsNullOrWhiteSpace(user.Role) ? "User" : user.Role),
+                new Claim("role", role ?? "admin"),
             };
 
             var token = new JwtSecurityToken(
