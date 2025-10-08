@@ -285,7 +285,7 @@ builder.Services.AddCors(opt =>
         policy.WithOrigins(allowedOrigins)
               .AllowAnyHeader()
               .AllowAnyMethod()
-              .AllowCredentials()
+            //   .AllowCredentials()
     );
 });
 
@@ -310,17 +310,6 @@ builder.Services
       return Task.CompletedTask;
       }
     };
-
-
-
-
-
-
-
-
-
-
-
   });
 
 builder.Services.AddAuthorization();
@@ -356,6 +345,7 @@ using (var scope = app.Services.CreateScope())
 // ======== Middlewares ========
 app.UseHttpsRedirection();
 app.UseStaticFiles();
+app.UseRouting();
 app.UseCors("AllowFrontend");      // ⚠️ phải đứng TRƯỚC auth
 app.UseAuthentication();
 app.UseAuthorization();
