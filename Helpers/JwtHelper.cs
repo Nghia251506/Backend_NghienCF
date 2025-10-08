@@ -13,11 +13,11 @@ namespace Backend_Nghiencf.Helpers
 
         public string GenerateToken(User user)
         {
-            var secretKey = _configuration["Jwt:SecretKey"] 
-                            ?? throw new Exception("Jwt:SecretKey is missing");
-            var issuer    = _configuration["Jwt:Issuer"];
-            var audience  = _configuration["Jwt:Audience"];
-            var expiresIn = int.TryParse(_configuration["Jwt:ExpiresInHours"], out var h) ? h : 1;
+            var secretKey = _configuration["Jwt__SecretKey"] 
+                            ?? throw new Exception("Jwt__SecretKey is missing");
+            var issuer    = _configuration["Jwt__Issuer"];
+            var audience  = _configuration["Jwt__Audience"];
+            var expiresIn = int.TryParse(_configuration["Jwt__ExpiresInHours"], out var h) ? h : 1;
 
             var key   = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
