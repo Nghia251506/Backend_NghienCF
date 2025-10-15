@@ -1,20 +1,20 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\VIKINGS\\Desktop\\New folder\\Backend_NghienCF\\Backend_Nghiencf.csproj": {}
+    "C:\\Users\\Administrator\\Desktop\\New folder\\Backend_NghienCF\\Backend_Nghiencf.csproj": {}
   },
   "projects": {
-    "C:\\Users\\VIKINGS\\Desktop\\New folder\\Backend_NghienCF\\Backend_Nghiencf.csproj": {
+    "C:\\Users\\Administrator\\Desktop\\New folder\\Backend_NghienCF\\Backend_Nghiencf.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\VIKINGS\\Desktop\\New folder\\Backend_NghienCF\\Backend_Nghiencf.csproj",
+        "projectUniqueName": "C:\\Users\\Administrator\\Desktop\\New folder\\Backend_NghienCF\\Backend_Nghiencf.csproj",
         "projectName": "Backend_Nghiencf",
-        "projectPath": "C:\\Users\\VIKINGS\\Desktop\\New folder\\Backend_NghienCF\\Backend_Nghiencf.csproj",
-        "packagesPath": "C:\\Users\\VIKINGS\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\VIKINGS\\Desktop\\New folder\\Backend_NghienCF\\obj\\",
+        "projectPath": "C:\\Users\\Administrator\\Desktop\\New folder\\Backend_NghienCF\\Backend_Nghiencf.csproj",
+        "packagesPath": "C:\\Users\\Administrator\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\Administrator\\Desktop\\New folder\\Backend_NghienCF\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "C:\\Users\\VIKINGS\\AppData\\Roaming\\NuGet\\NuGet.Config"
+          "C:\\Users\\Administrator\\AppData\\Roaming\\NuGet\\NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net9.0"
@@ -120,7 +120,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.305/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.306/PortableRuntimeIdentifierGraph.json"
         }
       }
     }
