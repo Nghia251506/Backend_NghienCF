@@ -7,5 +7,6 @@ namespace Backend_Nghiencf.DTOs
         public string? PaymentQrUrl { get; init; }     // nếu có
         public string? PaymentQrImage { get; init; }   // data:image/png;base64,...
         public string? PaymentQrString { get; init; }
+        public string? BookingCode { get; set; }
     }
 }

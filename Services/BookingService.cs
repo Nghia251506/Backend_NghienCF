@@ -73,9 +73,10 @@ namespace Backend_Nghiencf.Services
 
                 var bookingId = Convert.ToInt32(pBookingId.Value ?? 0);
                 var totalAmount = Convert.ToDecimal(pTotalAmount.Value ?? 0m);
+                var bookingCode = Convert.ToString(pPaymentRef.Value ?? "");
 
                 // Giữ nguyên luồng QR của bạn
-                var qr = await _tingeeClient.CreateQrAsync(bookingId, totalAmount, ct);
+                var qr = await _tingeeClient.CreateQrAsync(bookingId, totalAmount,bookingCode, ct);
 
                 return new BookingResponseDto
                 {
@@ -83,7 +84,8 @@ namespace Backend_Nghiencf.Services
                     TotalAmount = totalAmount,
                     PaymentQrUrl = qr.QrUrl,
                     PaymentQrImage = qr.QrCodeImage,
-                    PaymentQrString = qr.QrCode
+                    PaymentQrString = qr.QrCode,
+                    BookingCode = bookingCode
                 };
             }
             catch (MySqlException ex) when (ex.SqlState == "45000")

@@ -8,6 +8,6 @@ namespace Backend_Nghiencf.Models
         public string Status { get; set; } = "valid";
         public DateTime IssuedAt { get; set; } = DateTime.Now;
 
-        public Booking Booking { get; set; }
+        public Booking Booking { get; set; } = null!;
     }
 }

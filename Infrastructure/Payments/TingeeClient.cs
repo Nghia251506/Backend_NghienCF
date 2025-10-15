@@ -55,7 +55,7 @@ public sealed class TingeeClient : ITingeeClient
         }
     }
 
-    public async Task<TingeeQrResult> CreateQrAsync(long bookingId, decimal amount, CancellationToken ct = default)
+    public async Task<TingeeQrResult> CreateQrAsync(long bookingId, decimal amount,string bookingCode, CancellationToken ct = default)
     {
         // ==== validate Bank config (theo yêu cầu Tingee) ====
         var bankName = _opt.Bank?.BankName?.Trim().ToUpperInvariant();
@@ -151,7 +151,7 @@ public sealed class TingeeClient : ITingeeClient
 
 public interface ITingeeClient
 {
-    Task<TingeeQrResult> CreateQrAsync(long bookingId, decimal amount, CancellationToken ct = default);
+    Task<TingeeQrResult> CreateQrAsync(long bookingId, decimal amount,string bookingCode, CancellationToken ct = default);
 }
 
 public sealed class TingeeQrResult

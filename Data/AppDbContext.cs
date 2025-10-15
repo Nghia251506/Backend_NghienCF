@@ -70,7 +70,8 @@ namespace Backend_Nghiencf.Data
                 e.HasOne(x => x.Booking)
                     .WithMany()
                     .HasForeignKey(x => x.BookingId)
-                    .OnDelete(DeleteBehavior.Restrict);
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .HasConstraintName("tickets_ibfk_1");
             });
 
             modelBuilder.Entity<Setting>(e =>
