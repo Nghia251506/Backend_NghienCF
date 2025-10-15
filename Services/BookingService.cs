@@ -2,6 +2,8 @@ using Microsoft.EntityFrameworkCore;
 using Backend_Nghiencf.Data;
 using Backend_Nghiencf.DTOs;
 using Backend_Nghiencf.Models;
+using System.Data;
+using MySqlConnector;
 
 namespace Backend_Nghiencf.Services
 {
@@ -40,85 +42,57 @@ namespace Backend_Nghiencf.Services
         {
             if (dto.Quantity <= 0) throw new ArgumentException("Số lượng phải > 0");
 
-            var strategy = _context.Database.CreateExecutionStrategy();
+            // Lấy connection gốc từ DbContext (Pomelo => MySqlConnection)
+            await using var conn = (MySqlConnection)_context.Database.GetDbConnection();
+            if (conn.State != ConnectionState.Open) await conn.OpenAsync(ct);
 
-            return await strategy.ExecuteAsync(async () =>
+            await using var cmd = new MySqlCommand("sp_create_booking", conn)
             {
-                await using var tx = await _context.Database.BeginTransactionAsync(ct);
+                CommandType = CommandType.StoredProcedure
+            };
 
-                try
+            // ===== INPUT params (khớp đúng tên trong PROC) =====
+            cmd.Parameters.AddWithValue("@p_show_id", dto.ShowId);
+            cmd.Parameters.AddWithValue("@p_ticket_type_id", dto.TicketTypeId);
+            cmd.Parameters.AddWithValue("@p_customer_name", dto.CustomerName?.Trim() ?? "");
+            cmd.Parameters.AddWithValue("@p_phone", dto.Phone?.Trim() ?? "");
+            cmd.Parameters.AddWithValue("@p_quantity", dto.Quantity);
+
+            // ===== OUTPUT params (khớp đúng tên/kiểu trong PROC) =====
+            var pBookingId = new MySqlParameter("@p_booking_id", MySqlDbType.Int64) { Direction = ParameterDirection.Output };
+            var pPaymentRef = new MySqlParameter("@p_payment_ref", MySqlDbType.VarChar, 64) { Direction = ParameterDirection.Output };
+            var pTotalAmount = new MySqlParameter("@p_total_amount", MySqlDbType.Decimal) { Direction = ParameterDirection.Output };
+            cmd.Parameters.Add(pBookingId);
+            cmd.Parameters.Add(pPaymentRef);
+            cmd.Parameters.Add(pTotalAmount);
+
+            try
+            {
+                // Proc đã: trừ kho atomically + insert booking (pending) + set PaymentRef
+                await cmd.ExecuteNonQueryAsync(ct);
+
+                var bookingId = Convert.ToInt32(pBookingId.Value ?? 0);
+                var totalAmount = Convert.ToDecimal(pTotalAmount.Value ?? 0m);
+
+                // Giữ nguyên luồng QR của bạn
+                var qr = await _tingeeClient.CreateQrAsync(bookingId, totalAmount, ct);
+
+                return new BookingResponseDto
                 {
-                    // 1) Trừ kho atomic
-                    var affected = await _context.Database.ExecuteSqlInterpolatedAsync($@"
-                UPDATE ticket_types
-                SET remaining_quantity = remaining_quantity - {dto.Quantity}
-                WHERE id = {dto.TicketTypeId} AND remaining_quantity >= {dto.Quantity};
-            ", ct);
-
-                    if (affected == 0)
-                    {
-                        var remain = await _context.TicketTypes.AsNoTracking()
-                            .Where(t => t.Id == dto.TicketTypeId)
-                            .Select(t => (int?)t.RemainingQuantity)
-                            .SingleOrDefaultAsync(ct) ?? 0;
-
-                        throw new InvalidOperationException($"Không đủ số lượng vé (còn {remain}, yêu cầu {dto.Quantity}).");
-                    }
-
-                    // 2) Lấy type (NoTracking)
-                    var type = await _context.TicketTypes.AsNoTracking()
-                        .SingleAsync(t => t.Id == dto.TicketTypeId, ct);
-
-                    // 3) Tạo booking (pending)
-                    var booking = new Booking
-                    {
-                        ShowId = type.ShowId,
-                        TicketTypeId = dto.TicketTypeId,
-                        CustomerName = dto.CustomerName?.Trim() ?? "",
-                        Phone = dto.Phone?.Trim() ?? "",
-                        Quantity = dto.Quantity,
-                        TotalAmount = type.Price * dto.Quantity,
-                        PaymentStatus = "pending",
-                        PaymentTime = null,
-                        CreatedAt = DateTime.UtcNow
-                    };
-
-                    _context.Bookings.Add(booking);
-                    await _context.SaveChangesAsync(ct); // cần Id để tạo QR
-
-                    // 4) Gọi Tingee tạo QR
-                    var qr = await _tingeeClient.CreateQrAsync(booking.Id, booking.TotalAmount, ct);
-
-                    // 5) Thành công -> COMMIT
-                    await tx.CommitAsync(ct);
-
-                    return new BookingResponseDto
-                    {
-                        BookingId = booking.Id,
-                        TotalAmount = booking.TotalAmount,
-                        PaymentQrUrl = qr.QrUrl,
-                        PaymentQrImage = qr.QrCodeImage,
-                        PaymentQrString = qr.QrCode
-                    };
-                }
-                catch
-                {
-                    // Lỗi -> rollback + cộng trả kho
-                    await tx.RollbackAsync(ct);
-
-                    await _context.Database.ExecuteSqlInterpolatedAsync($@"
-                UPDATE ticket_types
-                SET remaining_quantity = remaining_quantity + {dto.Quantity}
-                WHERE id = {dto.TicketTypeId};
-            ", ct);
-
-                    // Xoá booking chưa commit thì không cần, nhưng nếu đã SaveChanges
-                    // trước rollback ở RDBMS khác scope, có thể đảm bảo bằng cách:
-                    // _context.ChangeTracker.Clear(); // tuỳ chọn
-                    throw;
-                }
-            });
+                    BookingId = bookingId,
+                    TotalAmount = totalAmount,
+                    PaymentQrUrl = qr.QrUrl,
+                    PaymentQrImage = qr.QrCodeImage,
+                    PaymentQrString = qr.QrCode
+                };
+            }
+            catch (MySqlException ex) when (ex.SqlState == "45000")
+            {
+                // Lỗi business SIGNAL từ proc (vd hết kho)
+                throw new InvalidOperationException(ex.Message);
+            }
         }
+
 
 
 
