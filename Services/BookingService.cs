@@ -101,7 +101,7 @@ namespace Backend_Nghiencf.Services
                     //    BẮT BUỘC: orderId phải = booking.Id để webhook map được.
                     var createReq = new TingeeCreatePaymentRequest
                     {
-                        OrderId = booking.Id,
+                        OrderId = booking.Id.ToString(System.Globalization.CultureInfo.InvariantCulture),
                         Amount = booking.TotalAmount,
                         Description = $"BOOK-{booking.Id}", // tuỳ bạn
                         // Các field khác theo tài liệu Tingee (nếu cần):
