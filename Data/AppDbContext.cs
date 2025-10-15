@@ -92,7 +92,7 @@ namespace Backend_Nghiencf.Data
                         .HasColumnName("id")
                         .ValueGeneratedOnAdd()
                         .UseMySqlIdentityColumn(); // Pomelo
-                    e.Property(x => x.BookingCode).HasColumnName("PaymentRef");
+                    e.Property(x => x.BookingCode).HasColumnName("PaymentRef")
 
                     e.Property(x => x.ShowId).HasColumnName("show_id");
                     e.Property(x => x.TicketTypeId).HasColumnName("ticket_type_id");
