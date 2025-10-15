@@ -33,12 +33,9 @@ namespace Backend_Nghiencf.Models
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         // ===== Thêm 3 trường tùy chọn để lưu tham chiếu phía Tingee (khắc phục lỗi build) =====
-        [MaxLength(50)]
-        public string? Provider { get; set; }                 // "tingee"
-        [MaxLength(100)]
-        public string? ProviderOrderId { get; set; }          // orderId bên Tingee (thường = Booking.Id.ToString())
-        [MaxLength(100)]
-        public string? ProviderTxnId { get; set; }            // transactionId nếu có
+       [NotMapped] public string? Provider { get; set; }
+    [NotMapped] public string? ProviderOrderId { get; set; }
+    [NotMapped] public string? ProviderTxnId { get; set; }
 
         // ===== Navigation =====
         public Show Show { get; set; } = default!;
