@@ -182,7 +182,7 @@ namespace Backend_Nghiencf.Controllers
                         {
                             BookingId = booking.Id,
                             TicketCode = Guid.NewGuid().ToString("N")[..10].ToUpperInvariant(),
-                            Status = "active",
+                            Status = "valid",
                             IssuedAt = DateTime.UtcNow
                         }).ToList();
 
