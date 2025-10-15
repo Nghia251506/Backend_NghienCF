@@ -69,7 +69,7 @@ namespace Backend_Nghiencf.Data
                 e.Property(x => x.IssuedAt).HasColumnName("issued_at");
                 e.HasOne(x => x.Booking)
                     .WithMany()
-                    .HasForeignKey(bk => bk.BookingId)
+                    .HasForeignKey(x => x.BookingId)
                     .OnDelete(DeleteBehavior.Restrict);
             });
 
