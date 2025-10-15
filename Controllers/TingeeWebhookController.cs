@@ -20,7 +20,11 @@ namespace Backend_Nghiencf.Controllers
         private readonly AppDbContext _db;
         private readonly ILogger<TingeeWebhookController> _logger;
         private readonly TingeeOptions _opt;
+
+        // Cho phép chênh lệch ±5 phút
         private static readonly TimeSpan AllowedSkew = TimeSpan.FromMinutes(5);
+        // Cho phép lệch số tiền (nếu cần) — ví dụ 1.000đ
+        private const long AmountTolerance = 0;
 
         public TingeeWebhookController(
             AppDbContext db,
@@ -36,9 +40,10 @@ namespace Backend_Nghiencf.Controllers
         public async Task<IActionResult> HandleAsync()
         {
             var started = DateTime.UtcNow;
+
             try
             {
-                // Cho phép đọc lại body nếu middleware khác đã đọc trước
+                // Cho phép đọc lại body nếu có middleware đọc trước
                 HttpContext.Request.EnableBuffering();
 
                 var ts  = Request.Headers["x-request-timestamp"].ToString();
@@ -71,7 +76,7 @@ namespace Backend_Nghiencf.Controllers
                 }
                 _logger.LogInformation("[WEBHOOK] signature OK");
 
-                // Verify timestamp (ts là GIỜ VIỆT NAM -> convert sang UTC)
+                // Parse timestamp (ts là GIỜ VIỆT NAM → convert sang UTC)
                 if (!TryParseTsVietnam(ts, out var reqUtc))
                 {
                     _logger.LogWarning("[WEBHOOK] bad timestamp format: {Ts}", ts);
@@ -89,37 +94,47 @@ namespace Backend_Nghiencf.Controllers
                 using var doc = JsonDocument.Parse(body);
                 var root = doc.RootElement;
 
-                // Webhook biến động số dư: không có orderId/status
-                var content = root.TryGetProperty("content", out var pContent) ? pContent.GetString() : null;
-                var amount  = root.TryGetProperty("amount", out var pAmt) ? (long?)pAmt.GetInt64() : null;
-                var acc     = root.TryGetProperty("accountNumber", out var pAcc) ? pAcc.GetString() : null;
-                var vaAcc   = root.TryGetProperty("vaAccountNumber", out var pVa) ? pVa.GetString() : null;
+                // Một số webhook (biến động số dư) không có orderId/status mà chỉ có content/amount/… 
+                var content = GetString(root, "content");
+                var statusRaw = GetString(root, "status");           // nếu là webhook đơn hàng thì có thể có
+                var orderIdStr = GetString(root, "orderId") 
+                              ?? GetString(root, "orderCode");        // tuỳ môi trường
+                var bank = GetString(root, "bank");
+                var acc  = GetString(root, "accountNumber");
+                var va   = GetString(root, "vaAccountNumber");
+                var amount = GetLong(root, "amount");
 
-                _logger.LogInformation("[WEBHOOK] parsed fields: acc={Acc}, va={Va}, amount={Amt}, content={Content}",
-                    acc, vaAcc, amount, content);
+                _logger.LogInformation("[WEBHOOK] fields: orderId={OrderId}, status={Status}, bank={Bank}, acc={Acc}, va={Va}, amount={Amt}, content={Content}",
+                    orderIdStr, statusRaw, bank, acc, va, amount, content);
 
-                // Trích bookingId từ content: yêu cầu nội dung có 'PAY{digits}'
-                if (!TryExtractBookingIdFromContent(content, out var bookingId))
+                // Resolve bookingId
+                long bookingId;
+                if (!long.TryParse(orderIdStr, out bookingId))
                 {
-                    _logger.LogWarning("[WEBHOOK] cannot extract bookingId from content. content={Content}", content);
-                    return Ok(new { code = "02", message = "Cannot resolve booking" });
+                    // không có orderId -> trích từ content theo pattern PAY{digits}
+                    if (!TryExtractBookingIdFromContent(content, out bookingId))
+                    {
+                        _logger.LogWarning("[WEBHOOK] cannot resolve bookingId. orderId={OrderId}, content={Content}", orderIdStr, content);
+                        return Ok(new { code = "02", message = "Cannot resolve booking" });
+                    }
+                    _logger.LogInformation("[WEBHOOK] bookingId extracted from content: {Id}", bookingId);
                 }
 
-                // Kiểm tra số TK/VA nhận nếu có cấu hình
+                // (Tuỳ chọn) Check acc/vaAcc theo config
                 var expectedAcc = _opt.Bank?.AccountNumber?.Trim();
                 if (!string.IsNullOrWhiteSpace(expectedAcc))
                 {
                     var matched = string.Equals(expectedAcc, acc, StringComparison.OrdinalIgnoreCase)
-                               || string.Equals(expectedAcc, vaAcc, StringComparison.OrdinalIgnoreCase);
+                               || string.Equals(expectedAcc, va, StringComparison.OrdinalIgnoreCase);
                     if (!matched)
                     {
                         _logger.LogWarning("[WEBHOOK] account mismatch. expected={Exp} gotAcc={Acc} gotVa={Va}",
-                            expectedAcc, acc, vaAcc);
+                            expectedAcc, acc, va);
                         return Ok(new { code = "03", message = "Account mismatch" });
                     }
                 }
 
-                // Tìm booking
+                // Lấy booking
                 var booking = await _db.Bookings.FirstOrDefaultAsync(b => b.Id == bookingId);
                 if (booking == null)
                 {
@@ -127,21 +142,28 @@ namespace Backend_Nghiencf.Controllers
                     return Ok(new { code = "00", message = "OK (not found)" });
                 }
 
-                // Đối chiếu số tiền
+                // Đối chiếu số tiền (nếu payload có amount)
                 if (amount.HasValue)
                 {
                     var expectedAmount = (long)Math.Round(booking.TotalAmount);
-                    if (amount.Value != expectedAmount)
+                    if (Math.Abs(amount.Value - expectedAmount) > AmountTolerance)
                     {
                         _logger.LogWarning("[WEBHOOK] amount mismatch for booking {Id}. expected={Exp} got={Got}",
                             bookingId, expectedAmount, amount.Value);
-                        // Chính sách tuỳ bạn: ở đây trả OK nhưng không đổi trạng thái
+                        // Chính sách tuỳ chọn: ở đây không đổi trạng thái
                         return Ok(new { code = "04", message = "Amount mismatch" });
                     }
                 }
 
+                // Quyết định trạng thái
+                var next = MapStatus(statusRaw); // nếu không có status -> 'paid' khi đã match được giao dịch
+                if (next == "pending")
+                {
+                    // Webhook biến động số dư (không có status): coi như đã thanh toán
+                    next = "paid";
+                }
+
                 var old = (booking.PaymentStatus ?? "").ToLowerInvariant();
-                var next = "paid";
                 _logger.LogInformation("[WEBHOOK] booking {Id}: {Old} -> {Next}", booking.Id, old, next);
 
                 if (old == next)
@@ -150,24 +172,40 @@ namespace Backend_Nghiencf.Controllers
                     return Ok(new { code = "00", message = "OK" });
                 }
 
-                // Phát hành vé idempotent
-                var hasTickets = await _db.Tickets.AnyAsync(t => t.BookingId == booking.Id);
-                if (!hasTickets)
+                // Nếu failed từ pending → hoàn kho
+                if (next == "failed" && old == "pending")
                 {
-                    var tickets = Enumerable.Range(0, booking.Quantity).Select(_ => new Ticket
-                    {
-                        BookingId  = booking.Id,
-                        TicketCode = Guid.NewGuid().ToString("N")[..10].ToUpperInvariant(),
-                        Status     = "active",
-                        IssuedAt   = DateTime.UtcNow
-                    }).ToList();
+                    _logger.LogInformation("[WEBHOOK] restore stock +{Qty} for type={Type} show={Show}",
+                        booking.Quantity, booking.TicketTypeId, booking.ShowId);
 
-                    _db.Tickets.AddRange(tickets);
-                    _logger.LogInformation("[WEBHOOK] issued {Count} ticket(s) for booking {Id}", tickets.Count, booking.Id);
+                    await _db.Database.ExecuteSqlRawAsync(@"
+                        UPDATE TicketTypes
+                        SET RemainingQuantity = RemainingQuantity + {0}
+                        WHERE Id = {1} AND ShowId = {2}",
+                        booking.Quantity, booking.TicketTypeId, booking.ShowId);
                 }
-                else
+
+                // Nếu paid → phát hành vé (idempotent)
+                if (next == "paid")
                 {
-                    _logger.LogInformation("[WEBHOOK] tickets already issued for booking {Id}", booking.Id);
+                    var hasTickets = await _db.Tickets.AnyAsync(t => t.BookingId == booking.Id);
+                    if (!hasTickets)
+                    {
+                        var tickets = Enumerable.Range(0, booking.Quantity).Select(_ => new Ticket
+                        {
+                            BookingId  = booking.Id,
+                            TicketCode = Guid.NewGuid().ToString("N")[..10].ToUpperInvariant(),
+                            Status     = "active",
+                            IssuedAt   = DateTime.UtcNow
+                        }).ToList();
+
+                        _db.Tickets.AddRange(tickets);
+                        _logger.LogInformation("[WEBHOOK] issued {Count} ticket(s) for booking {Id}", tickets.Count, booking.Id);
+                    }
+                    else
+                    {
+                        _logger.LogInformation("[WEBHOOK] tickets already issued for booking {Id}", booking.Id);
+                    }
                 }
 
                 // Cập nhật booking
@@ -191,35 +229,53 @@ namespace Backend_Nghiencf.Controllers
 
         // ===== Helpers =====
 
+        private static string? GetString(JsonElement root, string name)
+            => root.TryGetProperty(name, out var p) ? p.GetString() : null;
+
+        private static long? GetLong(JsonElement root, string name)
+            => root.TryGetProperty(name, out var p) && p.ValueKind == JsonValueKind.Number
+                ? p.GetInt64()
+                : (long?)null;
+
         private static bool TryExtractBookingIdFromContent(string? content, out long bookingId)
         {
             bookingId = 0;
             if (string.IsNullOrWhiteSpace(content)) return false;
 
-            // Ưu tiên pattern PAY{digits} hoặc "PAY 12345" / "PAY#12345"
-            var m = Regex.Match(content, @"PAY\s*#?\s*(\d+)", RegexOptions.IgnoreCase);
+            // ưu tiên "PAY{digits}" (PAY20878, PAY 20878, PAY#20878 ...)
+            var m = Regex.Match(content, @"(?i)\bPAY\s*#?\s*(\d+)\b");
             if (m.Success && long.TryParse(m.Groups[1].Value, out bookingId)) return true;
 
-            // Fallback (nếu bạn muốn): bắt dãy số >= 4 chữ số
-            // var m2 = Regex.Match(content, @"\b(\d{4,})\b");
+            // fallback: dãy số 5–10 chữ số (tuỳ bạn bật)
+            // var m2 = Regex.Match(content, @"\b(\d{5,10})\b");
             // if (m2.Success && long.TryParse(m2.Groups[1].Value, out bookingId)) return true;
 
             return false;
         }
 
+        private static string MapStatus(string? s)
+        {
+            var x = (s ?? "").Trim().ToUpperInvariant();
+            return x switch
+            {
+                "SUCCESS" or "PAID" or "COMPLETED" => "paid",
+                "FAILED" or "CANCELLED" or "ERROR" => "failed",
+                _ => "pending"
+            };
+        }
+
         private static bool TryParseTsVietnam(string ts, out DateTime utc)
         {
-            // ts format: yyyyMMddHHmmssfff (GIỜ VN)
+            // ts: yyyyMMddHHmmssfff (GIỜ VIỆT NAM)
             if (DateTime.TryParseExact(ts, "yyyyMMddHHmmssfff",
                 System.Globalization.CultureInfo.InvariantCulture,
                 System.Globalization.DateTimeStyles.None, out var local))
             {
-                // VN timezone
                 var tzId = System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows)
                     ? "SE Asia Standard Time"
                     : "Asia/Ho_Chi_Minh";
-
                 var vn = TimeZoneInfo.FindSystemTimeZoneById(tzId);
+
                 var unspecified = DateTime.SpecifyKind(local, DateTimeKind.Unspecified);
                 utc = TimeZoneInfo.ConvertTimeToUtc(unspecified, vn);
                 return true;
