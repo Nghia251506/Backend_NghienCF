@@ -115,18 +115,17 @@ namespace Backend_Nghiencf.Services
 
                     // 5) Lưu tham chiếu từ phía Tingee (nếu có) - tuỳ mô hình DB của bạn
                     // Nếu trong Booking có các trường này thì gán, nếu không thì bỏ qua.
-                    try
-                    {
-                        booking.Provider = "tingee";
-                        booking.ProviderOrderId = string.IsNullOrWhiteSpace(tg.OrderId) ? createReq.OrderId : tg.OrderId;
-                        booking.ProviderTxnId   = tg.TransactionId;
-                        await _context.SaveChangesAsync(ct);
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogWarning(ex, "[BOOKING] Optional provider refs not saved (fields may not exist in model).");
-                    }
-
+                    // try
+                    // {
+                    //     booking.Provider = "tingee";
+                    //     booking.ProviderOrderId = string.IsNullOrWhiteSpace(tg.OrderId) ? createReq.OrderId : tg.OrderId;
+                    //     booking.ProviderTxnId   = tg.TransactionId;
+                    //     await _context.SaveChangesAsync(ct);
+                    // }
+                    // catch (Exception ex)
+                    // {
+                    //     _logger.LogWarning(ex, "[BOOKING] Optional provider refs not saved (fields may not exist in model).");
+                    // }
                     // 6) Commit giao dịch DB
                     await tx.CommitAsync(ct);
 
