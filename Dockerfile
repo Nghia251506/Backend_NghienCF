@@ -1,27 +1,29 @@
-# --------- BUILD STAGE ---------
-FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
+# ========== STAGE 1: BUILD ==========
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build  # Thay về phiên bản 8.0 nếu Railway không hỗ trợ .NET 9.0
+
+# Set working directory
 WORKDIR /src
 
-# Chỉ copy file .csproj trước để tận dụng cache của Docker layer
+# Copy csproj file và restore trước
 COPY Backend_Nghiencf.csproj ./
 RUN dotnet restore Backend_Nghiencf.csproj
 
-# Copy toàn bộ mã nguồn
+# Copy các file khác và build
 COPY . ./
 RUN dotnet publish Backend_Nghiencf.csproj -c Release -o /app/out
 
-# --------- RUNTIME STAGE ---------
-FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS runtime
+# ========== STAGE 2: RUNTIME ==========
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime  # Thay về phiên bản 8.0 nếu Railway không hỗ trợ .NET 9.0
+
+# Set working directory
 WORKDIR /app
 
-# Copy từ build stage
+# Copy các file đã build từ build stage
 COPY --from=build /app/out ./
 
-# Railway sẽ inject biến PORT, ta dùng biến đó để cấu hình ASP.NET Core
-ENV ASPNETCORE_URLS=http://0.0.0.0:${PORT}
+# Set cổng và môi trường cho ứng dụng
+ENV ASPNETCORE_URLS=http://0.0.0.0:80  # Railway sử dụng cổng 80 mặc định
+EXPOSE 80
 
-# Expose đúng cổng Railway sử dụng (Railway thường dùng PORT hoặc 8080)
-EXPOSE 8080
-
-# Lệnh chạy ứng dụng
-ENTRYPOINT ["dotnet", "Backend_Nghiencf.dll"]
+# Chạy ứng dụng
+CMD ["dotnet", "Backend_Nghiencf.dll"]
