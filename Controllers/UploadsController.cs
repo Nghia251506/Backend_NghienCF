@@ -25,7 +25,7 @@ namespace Backend_Nghiencf.Controllers
             var file = dto.File;
 
             if (file == null || file.Length == 0)
-                return BadRequest(new { message = "❌ Không có file được tải lên" });
+                return BadRequest(new { message = " Không có file được tải lên" });
 
             // Đảm bảo thư mục /wwwroot/uploads tồn tại
             var wwwRoot = _env.WebRootPath ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");

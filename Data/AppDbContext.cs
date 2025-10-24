@@ -131,6 +131,7 @@ namespace Backend_Nghiencf.Data
                 e.Property(x => x.Name).HasColumnName("name");
                 e.Property(x => x.Color).HasColumnName("color");
                 e.Property(x => x.Price).HasColumnName("price");
+                e.Property(x => x.Description).HasColumnName("description");
                 e.Property(x => x.TotalQuantity).HasColumnName("total_quantity");
                 e.Property(x => x.RemainingQuantity).HasColumnName("remaining_quantity");
 

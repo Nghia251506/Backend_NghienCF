@@ -43,6 +43,7 @@ namespace Backend_Nghiencf.Services
                 Name = tp.Name,
                 Color = tp.Color,
                 Price = tp.Price,
+                Description = tp.Description,
                 TotalQuantity = tp.TotalQuantity,
                 RemainingQuantity = tp.RemainingQuantity
             }).ToListAsync();
@@ -77,6 +78,7 @@ namespace Backend_Nghiencf.Services
                 Name = dto.Name,
                 Color = dto.Color,
                 Price = dto.Price,
+                Description = dto.Description,
                 TotalQuantity = dto.TotalQuantity,
                 RemainingQuantity = dto.TotalQuantity
             };
@@ -95,6 +97,8 @@ namespace Backend_Nghiencf.Services
             s.Color = dto.Color;
             s.Price = dto.Price;
             s.TotalQuantity = dto.TotalQuantity;
+            s.Description = dto.Description;
+            s.RemainingQuantity = dto.TotalQuantity;
             await _context.SaveChangesAsync();
             return true;
         }
