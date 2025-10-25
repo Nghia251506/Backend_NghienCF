@@ -65,6 +65,7 @@ namespace Backend_Nghiencf.Services
                 Name = s.Name,
                 Color = s.Color,
                 Price = s.Price,
+                Description = s.Description,
                 TotalQuantity = s.TotalQuantity,
                 RemainingQuantity = s.RemainingQuantity
             };
