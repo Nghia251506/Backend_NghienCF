@@ -27,6 +27,7 @@ namespace Backend_Nghiencf.Services
                     Name = t.Name,
                     Price = t.Price,
                     Color = t.Color,
+                    Description = t.Description,
                     TotalQuantity = t.TotalQuantity,
                     RemainingQuantity = t.RemainingQuantity
                 })
