@@ -56,7 +56,6 @@ builder.Services.AddHostedService<TicketBackfillService>();
 builder.Services.AddHostedService<PendingBookingExpiryService>();
 builder.Services.AddHttpClient<ITingeeClient, TingeeClient>();
 builder.Services.Configure<TingeeOptions>(builder.Configuration.GetSection("Tingee"));
-// builder.Services.AddSingleton<ITokenService, TokenService>();
 
 // ======== Swagger ========
 builder.Services.AddEndpointsApiExplorer();
@@ -102,7 +101,6 @@ builder.Services.AddCors(opt =>
         policy.WithOrigins(allowedOrigins)
               .AllowAnyHeader()
               .AllowAnyMethod()
-    //   .AllowCredentials()
     );
 });
 
@@ -123,7 +121,7 @@ builder.Services
       };
       options.Events = new JwtBearerEvents
       {
-          OnMessageReceived = ctx => { /* như trên */ return Task.CompletedTask; },
+          OnMessageReceived = ctx => Task.CompletedTask,
           OnAuthenticationFailed = ctx =>
           {
               Console.WriteLine("JWT failed: " + ctx.Exception.Message);
@@ -140,16 +138,18 @@ builder.Services.AddControllers()
     {
         opt.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
     });
-var uploadsPath = Path.Combine(builder.Environment.WebRootPath, "uploads");
-Directory.CreateDirectory(uploadsPath);
+
+// -------------- BUILD APP --------------
 var app = builder.Build();
+
+// ======== Global exception ========
 app.UseExceptionHandler(errApp =>
 {
     errApp.Run(async ctx =>
     {
         var feat = ctx.Features.Get<Microsoft.AspNetCore.Diagnostics.IExceptionHandlerPathFeature>();
         Console.WriteLine("[EX] PATH=" + feat?.Path);
-        Console.WriteLine("[EX] " + feat?.Error); // ⬅️ lên Railway Logs
+        Console.WriteLine("[EX] " + feat?.Error);
 
         ctx.Response.StatusCode = StatusCodes.Status500InternalServerError;
         ctx.Response.ContentType = "application/json";
@@ -176,15 +176,36 @@ using (var scope = app.Services.CreateScope())
     db.Database.Migrate();
 }
 
-// ======== Middlewares ========
+// ========== STATIC FILES ==========
 app.UseHttpsRedirection();
+
+// 1) đảm bảo có wwwroot
+var webRoot = app.Environment.WebRootPath;
+if (string.IsNullOrEmpty(webRoot))
+{
+    webRoot = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
+    Directory.CreateDirectory(webRoot);
+    app.Environment.WebRootPath = webRoot;
+}
+
+// 2) đảm bảo có wwwroot/uploads
+var uploadsPath = Path.Combine(webRoot, "uploads");
+Directory.CreateDirectory(uploadsPath);
+
+// 3) serve toàn bộ wwwroot: /css, /js, /uploads nếu có
+app.UseStaticFiles();
+
+// 4) (optional) serve riêng /uploads nếu muốn chắc chắn
 app.UseStaticFiles(new StaticFileOptions
 {
     FileProvider = new PhysicalFileProvider(uploadsPath),
+    // ⚠️ ở đây để /uploads chứ KHÔNG phải /api/uploads
     RequestPath = "/uploads"
 });
+
+// ======== PIPELINE ========
 app.UseRouting();
-app.UseCors("AllowFrontend");      // ⚠️ phải đứng TRƯỚC auth
+app.UseCors("AllowFrontend");
 app.UseAuthentication();
 app.UseAuthorization();
 
@@ -192,4 +213,3 @@ app.MapControllers();
 app.MapGet("/healthz", () => Results.Ok(new { status = "ok" }));
 
 app.Run();
-
