@@ -26,7 +26,8 @@ namespace Backend_Nghiencf.Services
                 Location = s.Location,
                 BannerUrl = s.BannerUrl,
                 Capacity = s.Capacity,
-                Slogan = s.Slogan
+                Slogan = s.Slogan,
+                IsDefault = s.IsDefault
             })
             .ToListAsync();
         }
@@ -142,6 +143,23 @@ namespace Backend_Nghiencf.Services
             if (show == null) return false;
 
             _context.Shows.Remove(show);
+            await _context.SaveChangesAsync();
+            return true;
+        }
+        public async Task<bool> SetDefaultShow(int id)
+        {
+            var showDefault = await _context.Shows.FirstOrDefaultAsync(s => s.Id == id);
+            if (showDefault == null) return false;
+
+            //clear
+            var currentShow = await _context.Shows.FirstOrDefaultAsync(s => s.IsDefault == "Active");
+            if(currentShow != null)
+            {
+                currentShow.IsDefault = "Inactive";
+            }
+            
+            //set 
+            showDefault.IsDefault = "Active";
             await _context.SaveChangesAsync();
             return true;
         }

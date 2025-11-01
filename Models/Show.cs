@@ -12,6 +12,7 @@ namespace Backend_Nghiencf.Models
         public string? BannerUrl { get; set; }
         public string? Capacity { get; set; }
         public string? Slogan { get; set; }
+        public string? IsDefault { get; set; } = "Inactive";
 
         // public static implicit operator Show(Show v)
         // {

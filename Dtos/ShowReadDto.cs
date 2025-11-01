@@ -12,5 +12,6 @@ namespace Backend_Nghiencf.DTOs
         public string? BannerUrl { get; set; }
         public string? Capacity { get; set; }
         public string? Slogan { get; set; }
+        public string IsDefault { get; set; } = "Inactive";
     }
 }

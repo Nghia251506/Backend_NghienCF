@@ -9,5 +9,6 @@ namespace Backend_Nghiencf.Services
         Task<ShowReadDto?> CreateAsync(ShowCreateDto dto);
         Task<ShowReadDto?> UpdateAsync(string Title, ShowUpdateDto dto);
         Task<bool> DeleteAsync(int Id);
+        Task<bool> SetDefaultShow(int Id);
     }
 }

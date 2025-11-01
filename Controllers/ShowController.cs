@@ -50,6 +50,12 @@ namespace Backend_Nghiencf.Controllers
             var ok = await _showService.DeleteAsync(id);
             return ok ? NoContent() : NotFound();
         }
-
+        [HttpPut("{id}/set-default")]
+        public async Task<IActionResult> SetDefault(int id)
+        {
+            var ok = await _showService.SetDefaultShow(id);
+            if (!ok) return NotFound("Show không tồn tại");
+            return NoContent();
+        }
     }
 }
