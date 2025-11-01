@@ -26,8 +26,11 @@ namespace Backend_Nghiencf.Controllers
             if (file == null || file.Length == 0)
                 return BadRequest(new { message = "Không có file được tải lên" });
 
-            var wwwRoot = _env.WebRootPath ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
-            var uploadsPath = Path.Combine(wwwRoot, "uploads");
+            // xác định webroot
+            var webRoot = _env.WebRootPath ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
+            Directory.CreateDirectory(webRoot);
+
+            var uploadsPath = Path.Combine(webRoot, "uploads");
             Directory.CreateDirectory(uploadsPath);
 
             var ext = Path.GetExtension(file.FileName);
@@ -39,9 +42,9 @@ namespace Backend_Nghiencf.Controllers
                 await file.CopyToAsync(stream);
             }
 
-            // 👇 trả về đường dẫn tương đối
-            var host = Request.Host.Value;                   // ví dụ: api.tncom.xyz
-            var publicUrl = $"https://{host}/api/uploads/{fileName}";
+            // ⚠️ quan trọng: proxy của bạn chỉ mở /api/* nên mình trả về /api/uploads/...
+            var baseUrl = $"{Request.Scheme}://{Request.Host}";
+            var publicUrl = $"{baseUrl}/api/uploads/{fileName}";
 
             return Ok(new
             {
@@ -49,6 +52,25 @@ namespace Backend_Nghiencf.Controllers
                 fileName,
                 size = file.Length
             });
+        }
+
+        // optional: để bạn xem đang có file nào
+        [HttpGet("list")]
+        public IActionResult List()
+        {
+            var webRoot = _env.WebRootPath ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
+            var uploadsPath = Path.Combine(webRoot, "uploads");
+            if (!Directory.Exists(uploadsPath))
+                return Ok(Array.Empty<string>());
+
+            var files = Directory.GetFiles(uploadsPath)
+                .Select(Path.GetFileName)
+                .Select(name => new {
+                    name,
+                    url = $"{Request.Scheme}://{Request.Host}/api/uploads/{name}"
+                });
+
+            return Ok(files);
         }
     }
 }
