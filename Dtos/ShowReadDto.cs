@@ -13,5 +13,6 @@ namespace Backend_Nghiencf.DTOs
         public string? Capacity { get; set; }
         public string? Slogan { get; set; }
         public string IsDefault { get; set; } = "Inactive";
+        public string? DeleteStatus { get; set; } = "Active";
     }
 }

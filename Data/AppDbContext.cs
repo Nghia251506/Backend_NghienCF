@@ -49,6 +49,7 @@ namespace Backend_Nghiencf.Data
                 e.Property(x => x.Capacity).HasColumnName("capacity");
                 e.Property(x => x.Slogan).HasColumnName("slogan");
                 e.Property(x => x.IsDefault).HasColumnName("isDefault");
+                e.Property(x => x.DeleteStatus).HasColumnName("deleteStatus");
             });
             modelBuilder.Entity<User>(e =>
             {

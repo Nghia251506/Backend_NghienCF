@@ -13,6 +13,7 @@ namespace Backend_Nghiencf.Models
         public string? Capacity { get; set; }
         public string? Slogan { get; set; }
         public string? IsDefault { get; set; } = "Inactive";
+        public string? DeleteStatus { get; set; } = "Active";
 
         // public static implicit operator Show(Show v)
         // {

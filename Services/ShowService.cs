@@ -17,6 +17,7 @@ namespace Backend_Nghiencf.Services
         public async Task<IEnumerable<ShowReadDto>> GetAllAsync()
         {
             return await _context.Shows
+            .Where(s => s.DeleteStatus == "Active")
             .Select(s => new ShowReadDto
             {
                 Id = s.Id,
@@ -27,7 +28,8 @@ namespace Backend_Nghiencf.Services
                 BannerUrl = s.BannerUrl,
                 Capacity = s.Capacity,
                 Slogan = s.Slogan,
-                IsDefault = s.IsDefault
+                IsDefault = s.IsDefault,
+                DeleteStatus = s.DeleteStatus,
             })
             .ToListAsync();
         }
@@ -142,7 +144,11 @@ namespace Backend_Nghiencf.Services
             var show = await _context.Shows.FirstOrDefaultAsync(s => s.Id == id);
             if (show == null) return false;
 
-            _context.Shows.Remove(show);
+            show.DeleteStatus = "Deleted";   // 👈 đổi trạng thái
+                                             // nếu đang default thì bỏ luôn cho chắc
+            if (show.IsDefault == "Active")
+                show.IsDefault = "Inactive";
+
             await _context.SaveChangesAsync();
             return true;
         }
@@ -153,11 +159,11 @@ namespace Backend_Nghiencf.Services
 
             //clear
             var currentShow = await _context.Shows.FirstOrDefaultAsync(s => s.IsDefault == "Active");
-            if(currentShow != null)
+            if (currentShow != null)
             {
                 currentShow.IsDefault = "Inactive";
             }
-            
+
             //set 
             showDefault.IsDefault = "Active";
             await _context.SaveChangesAsync();
