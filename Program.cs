@@ -200,7 +200,7 @@ app.UseStaticFiles(new StaticFileOptions
 {
     FileProvider = new PhysicalFileProvider(uploadsPath),
     // ⚠️ ở đây để /uploads chứ KHÔNG phải /api/uploads
-    RequestPath = "/uploads"
+    RequestPath = "/api/uploads"
 });
 
 // ======== PIPELINE ========
