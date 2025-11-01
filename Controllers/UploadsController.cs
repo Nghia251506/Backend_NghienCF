@@ -41,7 +41,7 @@ namespace Backend_Nghiencf.Controllers
 
             // 👇 trả về đường dẫn tương đối
             var host = Request.Host.Value;                   // ví dụ: api.tncom.xyz
-            var publicUrl = $"https://{host}/uploads/{fileName}";
+            var publicUrl = $"https://{host}/api/uploads/{fileName}";
 
             return Ok(new
             {
