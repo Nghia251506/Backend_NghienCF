@@ -40,11 +40,12 @@ namespace Backend_Nghiencf.Controllers
             }
 
             // 👇 trả về đường dẫn tương đối
-            var relativeUrl = $"/uploads/{fileName}";
+            var host = Request.Host.Value;                   // ví dụ: api.tncom.xyz
+            var publicUrl = $"https://{host}/uploads/{fileName}";
 
             return Ok(new
             {
-                url = relativeUrl,
+                url = publicUrl,
                 fileName,
                 size = file.Length
             });
