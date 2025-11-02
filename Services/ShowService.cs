@@ -9,6 +9,21 @@ namespace Backend_Nghiencf.Services
     {
         private readonly AppDbContext _context;
 
+        private static string? NormalizeBannerUrl(string? url)
+        {
+            if (string.IsNullOrWhiteSpace(url))
+                return null;
+
+            url = url.Trim();
+
+            // nếu BE / proxy trả về http://api.chamkhoanhkhac.com/... thì ép sang https
+            if (url.StartsWith("http://", StringComparison.OrdinalIgnoreCase))
+            {
+                url = "https://" + url.Substring("http://".Length);
+            }
+
+            return url;
+        }
         public ShowService(AppDbContext context)
         {
             _context = context;
@@ -64,7 +79,7 @@ namespace Backend_Nghiencf.Services
                 Description = (dto.Description ?? string.Empty).Trim(),
                 Date = NormalizeDate(dto.Date),
                 Location = (dto.Location ?? string.Empty).Trim(),
-                BannerUrl = string.IsNullOrWhiteSpace(dto.BannerUrl) ? null : dto.BannerUrl!.Trim(),
+                BannerUrl = string.IsNullOrWhiteSpace(NormalizeBannerUrl(dto.BannerUrl)) ? null : dto.BannerUrl!.Trim(),
                 Capacity = dto.Capacity,
                 Slogan = (dto.Slogan ?? string.Empty).Trim()
             };
@@ -104,7 +119,7 @@ namespace Backend_Nghiencf.Services
             // - value => cập nhật URL
             if (dto.BannerUrl != null)
             {
-                show.BannerUrl = string.IsNullOrWhiteSpace(dto.BannerUrl)
+                show.BannerUrl = string.IsNullOrWhiteSpace(NormalizeBannerUrl(dto.BannerUrl))
                     ? null
                     : dto.BannerUrl.Trim();
             }
