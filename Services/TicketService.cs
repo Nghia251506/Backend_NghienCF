@@ -28,15 +28,16 @@ public sealed class TicketService : ITicketService
             join b in _context.Bookings.AsNoTracking() on t.BookingId equals b.Id
             select new TicketListItemDto
             {
-                Id           = t.Id,
-                BookingId    = t.BookingId,
-                TicketCode   = t.TicketCode,
-                Status       = t.Status,
-                IssuedAt     = t.IssuedAt,
+                Id = t.Id,
+                BookingId = t.BookingId,
+                TicketCode = t.TicketCode,
+                Status = t.Status,
+                IssuedAt = t.IssuedAt,
                 CustomerName = b.CustomerName,
-                Phone        = b.Phone,
-                PaymentTime  = b.PaymentTime,
-                ShowId       = b.ShowId
+                Phone = b.Phone,
+                PaymentTime = b.PaymentTime,
+                ShowId = b.ShowId,
+                ticketType = b.TicketType
             };
 
         // lọc theo show

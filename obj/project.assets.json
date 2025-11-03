@@ -9836,11 +9836,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "/Users/trongnghiasoftware/Desktop/Code/Backend_NghienCF/Backend_Nghiencf.csproj",
+      "projectUniqueName": "/Users/trongnghiasoftware/Desktop/Backend_NghienCF/Backend_Nghiencf.csproj",
       "projectName": "Backend_Nghiencf",
-      "projectPath": "/Users/trongnghiasoftware/Desktop/Code/Backend_NghienCF/Backend_Nghiencf.csproj",
+      "projectPath": "/Users/trongnghiasoftware/Desktop/Backend_NghienCF/Backend_Nghiencf.csproj",
       "packagesPath": "/Users/trongnghiasoftware/.nuget/packages/",
-      "outputPath": "/Users/trongnghiasoftware/Desktop/Code/Backend_NghienCF/obj/",
+      "outputPath": "/Users/trongnghiasoftware/Desktop/Backend_NghienCF/obj/",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "/Users/trongnghiasoftware/.nuget/NuGet/NuGet.Config"

@@ -1,3 +1,5 @@
+using Backend_Nghiencf.Models;
+
 namespace Backend_Nghiencf.Dtos.Ticket;
 
 public sealed class TicketListItemDto
@@ -13,4 +15,5 @@ public sealed class TicketListItemDto
     public string? Phone { get; set; }
     public DateTime? PaymentTime { get; set; }
     public int ShowId { get; set; }
+    public TicketType ticketType { get; set; }
 }

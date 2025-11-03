@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "LSpxIG5D0q4=",
+  "dgSpecHash": "W4eWkGjxg0w=",
   "success": true,
-  "projectFilePath": "/Users/trongnghiasoftware/Desktop/Code/Backend_NghienCF/Backend_Nghiencf.csproj",
+  "projectFilePath": "/Users/trongnghiasoftware/Desktop/Backend_NghienCF/Backend_Nghiencf.csproj",
   "expectedPackageFiles": [
     "/Users/trongnghiasoftware/.nuget/packages/automapper/12.0.1/automapper.12.0.1.nupkg.sha512",
     "/Users/trongnghiasoftware/.nuget/packages/automapper.extensions.microsoft.dependencyinjection/12.0.1/automapper.extensions.microsoft.dependencyinjection.12.0.1.nupkg.sha512",
