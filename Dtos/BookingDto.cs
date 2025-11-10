@@ -7,5 +7,6 @@ namespace Backend_Nghiencf.DTOs
         public string Phone { get; set; }
         public int TicketTypeId { get; set; }
         public int Quantity { get; set; }
+        public int remainningQuantity { get; set; }
     }
 }

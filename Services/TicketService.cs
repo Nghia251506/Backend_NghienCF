@@ -26,6 +26,7 @@ public sealed class TicketService : ITicketService
         var q =
             from t in _context.Tickets.AsNoTracking()
             join b in _context.Bookings.AsNoTracking() on t.BookingId equals b.Id
+            join s in _context.Shows.AsNoTracking() on b.ShowId equals s.Id
             select new TicketListItemDto
             {
                 Id = t.Id,
@@ -37,7 +38,10 @@ public sealed class TicketService : ITicketService
                 Phone = b.Phone,
                 PaymentTime = b.PaymentTime,
                 ShowId = b.ShowId,
-                ticketType = b.TicketType
+                ticketType = b.TicketType,
+                Date = s.Date,
+                Location = s.Location,
+                Image_url = s.BannerUrl
             };
 
         // lọc theo show

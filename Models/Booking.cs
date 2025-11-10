@@ -45,6 +45,7 @@ namespace Backend_Nghiencf.Models
         public Show Show { get; set; } = default!;
         public TicketType TicketType { get; set; } = default!;
 
+
         // Gợi ý thêm: để FE dễ query vé sau khi paid
         // public ICollection<Ticket> Tickets { get; set; } = new List<Ticket>();
     }
