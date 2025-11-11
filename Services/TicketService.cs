@@ -45,6 +45,10 @@ public sealed class TicketService : ITicketService
             };
 
         // lọc theo show
+        if (query.ShowId.HasValue)
+            q = q.Where(x => x.ShowId == query.ShowId.Value);
+
+        // lọc theo ticket code (contains, insensitive)
         if (!string.IsNullOrWhiteSpace(query.TicketCode) &&
     !string.IsNullOrWhiteSpace(query.CustomerName))
         {
@@ -67,6 +71,14 @@ public sealed class TicketService : ITicketService
             var name = query.CustomerName.Trim();
             q = q.Where(x => x.CustomerName.Contains(name));
         }
+
+        // lọc theo khoảng ngày (ưu tiên PaymentTime; nếu null có thể lọc theo IssuedAt)
+        if (query.DateFrom.HasValue)
+            q = q.Where(x => (x.PaymentTime ?? x.IssuedAt) >= query.DateFrom.Value);
+
+        if (query.DateTo.HasValue)
+            q = q.Where(x => (x.PaymentTime ?? x.IssuedAt) <= query.DateTo.Value);
+
         // tổng trước khi phân trang
         var total = await q.CountAsync(ct);
 
