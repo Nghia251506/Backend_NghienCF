@@ -1,7 +1,7 @@
 using System.Data;
 using Backend_Nghiencf.Data;
 using Backend_Nghiencf.Dtos;
-using Backend_Nghiencf.Dtos.Common;       
+using Backend_Nghiencf.Dtos.Common;
 using Backend_Nghiencf.Dtos.Ticket;
 using Backend_Nghiencf.Models;
 using Microsoft.EntityFrameworkCore;
@@ -45,28 +45,28 @@ public sealed class TicketService : ITicketService
             };
 
         // lọc theo show
-        if (query.ShowId.HasValue)
-            q = q.Where(x => x.ShowId == query.ShowId.Value);
+        if (!string.IsNullOrWhiteSpace(query.TicketCode) &&
+    !string.IsNullOrWhiteSpace(query.CustomerName))
+        {
+            var code = query.TicketCode.Trim();
+            var name = query.CustomerName.Trim();
 
-        // lọc theo ticket code (contains, insensitive)
-        if (!string.IsNullOrWhiteSpace(query.TicketCode))
+            // dùng OR thay vì AND
+            q = q.Where(x =>
+                x.TicketCode.Contains(code) ||
+                x.CustomerName.Contains(name)
+            );
+        }
+        else if (!string.IsNullOrWhiteSpace(query.TicketCode))
         {
             var code = query.TicketCode.Trim();
             q = q.Where(x => x.TicketCode.Contains(code));
         }
-        if (!string.IsNullOrWhiteSpace(query.CustomerName))
+        else if (!string.IsNullOrWhiteSpace(query.CustomerName))
         {
             var name = query.CustomerName.Trim();
             q = q.Where(x => x.CustomerName.Contains(name));
         }
-
-        // lọc theo khoảng ngày (ưu tiên PaymentTime; nếu null có thể lọc theo IssuedAt)
-        if (query.DateFrom.HasValue)
-            q = q.Where(x => (x.PaymentTime ?? x.IssuedAt) >= query.DateFrom.Value);
-
-        if (query.DateTo.HasValue)
-            q = q.Where(x => (x.PaymentTime ?? x.IssuedAt) <= query.DateTo.Value);
-
         // tổng trước khi phân trang
         var total = await q.CountAsync(ct);
 
@@ -153,11 +153,11 @@ public sealed class TicketService : ITicketService
             .Where(x => x.Id == id)
             .Select(x => new TicketReadDto
             {
-                Id         = x.Id,
-                BookingId  = x.BookingId,
+                Id = x.Id,
+                BookingId = x.BookingId,
                 TicketCode = x.TicketCode,
-                Status     = x.Status,
-                IssuedAt   = x.IssuedAt
+                Status = x.Status,
+                IssuedAt = x.IssuedAt
             })
             .SingleOrDefaultAsync(ct);
     }
@@ -169,11 +169,11 @@ public sealed class TicketService : ITicketService
             .OrderByDescending(x => x.IssuedAt)
             .Select(x => new TicketReadDto
             {
-                Id         = x.Id,
-                BookingId  = x.BookingId,
+                Id = x.Id,
+                BookingId = x.BookingId,
                 TicketCode = x.TicketCode,
-                Status     = x.Status,
-                IssuedAt   = x.IssuedAt
+                Status = x.Status,
+                IssuedAt = x.IssuedAt
             })
             .ToListAsync(ct);
     }
