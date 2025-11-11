@@ -5,6 +5,7 @@ public sealed class TicketQuery
     // lọc
     public int? ShowId { get; set; }
     public string? TicketCode { get; set; }
+    public string? CustomerName { get; set; }
     public DateTime? DateFrom { get; set; }   // lọc theo PaymentTime (nếu có), bằng UTC
     public DateTime? DateTo { get; set; }     // đã endOfDay ở FE thì giữ nguyên
 

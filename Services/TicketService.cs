@@ -54,6 +54,11 @@ public sealed class TicketService : ITicketService
             var code = query.TicketCode.Trim();
             q = q.Where(x => x.TicketCode.Contains(code));
         }
+        if (!string.IsNullOrWhiteSpace(query.CustomerName))
+        {
+            var name = query.CustomerName.Trim();
+            q = q.Where(x => x.CustomerName.Contains(name));
+        }
 
         // lọc theo khoảng ngày (ưu tiên PaymentTime; nếu null có thể lọc theo IssuedAt)
         if (query.DateFrom.HasValue)
