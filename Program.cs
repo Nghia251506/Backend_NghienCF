@@ -145,11 +145,13 @@ builder.Services.AddControllers()
         o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
         o.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
     });
+
+
 builder.Services.AddSingleton<BetaAnalyticsDataClient>(sp =>
 {
     var opt = sp.GetRequiredService<IOptions<GaOptions>>().Value;
 
-    // 1) Nếu có đường dẫn file (local/dev)
+    // 1) DEV/local: nếu set đường dẫn file
     if (!string.IsNullOrWhiteSpace(opt.CredentialsPath) && File.Exists(opt.CredentialsPath))
     {
         return new BetaAnalyticsDataClientBuilder {
@@ -157,18 +159,37 @@ builder.Services.AddSingleton<BetaAnalyticsDataClient>(sp =>
         }.Build();
     }
 
-    // 2) Railway: nhận JSON dưới dạng base64 từ ENV
+    // 2) PROD (Railway): nhận key từ ENV
+    // Hỗ trợ cả hai biến:
+    //  - GA4_KEY_JSON_BASE64: nội dung base64 của file JSON
+    //  - GA4_KEY_JSON:        nội dung JSON thô (nếu không dùng base64)
     var b64 = Environment.GetEnvironmentVariable("GA4_KEY_JSON_BASE64");
-    if (!string.IsNullOrEmpty(b64))
+    var raw = Environment.GetEnvironmentVariable("GA4_KEY_JSON");
+
+    string json = null;
+
+    if (!string.IsNullOrWhiteSpace(b64))
     {
-        var bytes = Convert.FromBase64String(b64);
-        using var ms = new MemoryStream(bytes);
+        // Nếu dán nhầm JSON vào biến base64 (bắt đầu bằng '{'), thì dùng luôn
+        if (b64.TrimStart().StartsWith("{"))
+            json = b64;
+        else
+            json = Encoding.UTF8.GetString(Convert.FromBase64String(b64));
+    }
+    else if (!string.IsNullOrWhiteSpace(raw))
+    {
+        json = raw;
+    }
+
+    if (!string.IsNullOrWhiteSpace(json))
+    {
+        using var ms = new MemoryStream(Encoding.UTF8.GetBytes(json));
         var cred = GoogleCredential.FromStream(ms)
-                                   .CreateScoped(BetaAnalyticsDataClient.DefaultScopes);
+            .CreateScoped(BetaAnalyticsDataClient.DefaultScopes /* or "https://www.googleapis.com/auth/analytics.readonly" */);
         return new BetaAnalyticsDataClientBuilder { GoogleCredential = cred }.Build();
     }
 
-    // 3) ADC (nếu deploy trong GCP có gán service account)
+    // 3) Cuối cùng mới tới ADC (chỉ hữu ích nếu chạy trong GCP có SA gắn sẵn)
     return new BetaAnalyticsDataClientBuilder().Build();
 });
 
