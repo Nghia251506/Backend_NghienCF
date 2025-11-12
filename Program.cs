@@ -11,7 +11,9 @@ using Microsoft.Extensions.Logging;
 using System.Text.Json.Serialization;
 using DotNetEnv;
 using Microsoft.Extensions.FileProviders;
-
+using Google.Analytics.Data.V1Beta;
+using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Options;
 try
 {
     Env.Load(); // đọc file .env nếu có
@@ -56,6 +58,8 @@ builder.Services.AddHostedService<TicketBackfillService>();
 builder.Services.AddHostedService<PendingBookingExpiryService>();
 builder.Services.AddHttpClient<ITingeeClient, TingeeClient>();
 builder.Services.Configure<TingeeOptions>(builder.Configuration.GetSection("Tingee"));
+builder.Services.AddMemoryCache();
+builder.Services.Configure<GaOptions>(builder.Configuration.GetSection("Ga4"));
 
 // ======== Swagger ========
 builder.Services.AddEndpointsApiExplorer();
@@ -134,10 +138,31 @@ builder.Services.AddAuthorization();
 
 // ======== Controllers ========
 builder.Services.AddControllers()
-    .AddJsonOptions(opt =>
+    .AddJsonOptions(o =>
     {
-        opt.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+        // tuỳ chọn: enum ra string, ignore null
+        o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+        o.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
     });
+builder.Services.AddSingleton<BetaAnalyticsDataClient>(sp =>
+{
+    var opt = sp.GetRequiredService<IOptions<GaOptions>>().Value;
+    if (!string.IsNullOrWhiteSpace(opt.CredentialsPath))
+    {
+        if (!File.Exists(opt.CredentialsPath))
+            throw new FileNotFoundException($"GA4 key not found at: {opt.CredentialsPath}");
+
+        return new BetaAnalyticsDataClientBuilder
+        {
+            CredentialsPath = opt.CredentialsPath
+        }.Build();
+    }
+
+    // Fallback: dùng ENV nếu không cấu hình CredentialsPath
+    return new BetaAnalyticsDataClientBuilder().Build();
+});
+
+builder.Services.AddSingleton<IGa4Service, Ga4Service>();
 
 // -------------- BUILD APP --------------
 var app = builder.Build();
@@ -213,3 +238,7 @@ app.MapControllers();
 app.MapGet("/healthz", () => Results.Ok(new { status = "ok" }));
 
 app.Run();
+
+internal interface IOption
+{
+}

@@ -23,6 +23,12 @@
       "Tingee__ClientId": "",
       "Tingee__SecretToken": "",
       "Tingee__Environment": "Live"
+    },
+    "Backend_NghienCF": {
+    "commandName": "Project",
+    "environmentVariables": {
+      "GOOGLE_APPLICATION_CREDENTIALS": "C:\\Users\\Administrator\\Desktop\\New folder\\Backend_NghienCF\\ga4-key.json"
     }
+  }
   }
 }
