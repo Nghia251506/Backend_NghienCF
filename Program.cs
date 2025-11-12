@@ -14,6 +14,7 @@ using Microsoft.Extensions.FileProviders;
 using Google.Analytics.Data.V1Beta;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
+using Google.Apis.Auth.OAuth2;
 try
 {
     Env.Load(); // đọc file .env nếu có
@@ -147,18 +148,27 @@ builder.Services.AddControllers()
 builder.Services.AddSingleton<BetaAnalyticsDataClient>(sp =>
 {
     var opt = sp.GetRequiredService<IOptions<GaOptions>>().Value;
-    if (!string.IsNullOrWhiteSpace(opt.CredentialsPath))
-    {
-        if (!File.Exists(opt.CredentialsPath))
-            throw new FileNotFoundException($"GA4 key not found at: {opt.CredentialsPath}");
 
-        return new BetaAnalyticsDataClientBuilder
-        {
+    // 1) Nếu có đường dẫn file (local/dev)
+    if (!string.IsNullOrWhiteSpace(opt.CredentialsPath) && File.Exists(opt.CredentialsPath))
+    {
+        return new BetaAnalyticsDataClientBuilder {
             CredentialsPath = opt.CredentialsPath
         }.Build();
     }
 
-    // Fallback: dùng ENV nếu không cấu hình CredentialsPath
+    // 2) Railway: nhận JSON dưới dạng base64 từ ENV
+    var b64 = Environment.GetEnvironmentVariable("GA4_KEY_JSON_BASE64");
+    if (!string.IsNullOrEmpty(b64))
+    {
+        var bytes = Convert.FromBase64String(b64);
+        using var ms = new MemoryStream(bytes);
+        var cred = GoogleCredential.FromStream(ms)
+                                   .CreateScoped(BetaAnalyticsDataClient.DefaultScopes);
+        return new BetaAnalyticsDataClientBuilder { GoogleCredential = cred }.Build();
+    }
+
+    // 3) ADC (nếu deploy trong GCP có gán service account)
     return new BetaAnalyticsDataClientBuilder().Build();
 });
 
