@@ -40,6 +40,9 @@ namespace Backend_Nghiencf.Models
         [NotMapped] public string? Provider { get; set; }
         [NotMapped] public string? ProviderOrderId { get; set; }
         [NotMapped] public string? ProviderTxnId { get; set; }
+        // NEW: số ghế mà booking này đã “giữ” (quantity × seat_factor)
+        public int SeatsConsumed { get; set; }
+
 
         // ===== Navigation =====
         public Show Show { get; set; } = default!;

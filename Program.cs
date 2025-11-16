@@ -15,12 +15,12 @@ using Google.Analytics.Data.V1Beta;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 using Google.Apis.Auth.OAuth2;
-try
-{
-    Env.Load(); // đọc file .env nếu có
-}
-catch { }
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using RabbitMQ.Client;
 
+
+try { DotNetEnv.Env.Load(); } catch { /* ignore if missing */ }
+static string Env(string key, string? def = null) => Environment.GetEnvironmentVariable(key) ?? def ?? "";
 var builder = WebApplication.CreateBuilder(args);
 
 // ======== JWT ========
@@ -61,7 +61,9 @@ builder.Services.AddHttpClient<ITingeeClient, TingeeClient>();
 builder.Services.Configure<TingeeOptions>(builder.Configuration.GetSection("Tingee"));
 builder.Services.AddMemoryCache();
 builder.Services.Configure<GaOptions>(builder.Configuration.GetSection("Ga4"));
-
+builder.Services.AddControllers(); 
+builder.Services.AddEndpointsApiExplorer(); 
+builder.Services.AddSwaggerGen();  
 // ======== Swagger ========
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
@@ -97,7 +99,7 @@ var allowedOrigins = new[]
     "http://localhost:5173",
     "http://127.0.0.1:5173",
     "https://frontend-nghien-cf.vercel.app",
-    "https://api.chamkhoanhkhac.com"
+    "https://api.chamkhoanhkhac.com",
 };
 
 builder.Services.AddCors(opt =>
@@ -214,7 +216,8 @@ app.UseExceptionHandler(errApp =>
 });
 
 // ======== Dev Swagger ========
-if (app.Environment.IsDevelopment())
+var enableSwagger = builder.Configuration.GetValue<bool>("Swagger:Enable", false);
+if (app.Environment.IsDevelopment() || enableSwagger)
 {
     app.UseDeveloperExceptionPage();
     app.UseSwagger();

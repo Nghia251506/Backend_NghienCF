@@ -50,6 +50,8 @@ namespace Backend_Nghiencf.Data
                 e.Property(x => x.Slogan).HasColumnName("slogan");
                 e.Property(x => x.IsDefault).HasColumnName("isDefault");
                 e.Property(x => x.DeleteStatus).HasColumnName("deleteStatus");
+                e.Property(x => x.TotalSeats).HasColumnName("total_seats");
+                e.Property(x => x.RemainingSeats).HasColumnName("remaining_seats").HasColumnType("int");
             });
             modelBuilder.Entity<User>(e =>
             {
@@ -113,6 +115,7 @@ namespace Backend_Nghiencf.Data
                     e.Property(x => x.CreatedAt)
                         .HasColumnName("created_at")
                         .HasDefaultValueSql("CURRENT_TIMESTAMP");
+                    e.Property(x => x.SeatsConsumed).HasColumnName("seats_consumed").HasColumnType("int");
 
                     e.HasOne(x => x.TicketType)
                         .WithMany()
@@ -136,6 +139,9 @@ namespace Backend_Nghiencf.Data
                 e.Property(x => x.Description).HasColumnName("description");
                 e.Property(x => x.TotalQuantity).HasColumnName("total_quantity");
                 e.Property(x => x.RemainingQuantity).HasColumnName("remaining_quantity");
+                e.Property(x => x.SeatsUnit).HasColumnName("seats_per_unit");
+
+                e.HasOne(x => x.Show).WithMany().HasForeignKey(x => x.ShowId).OnDelete(DeleteBehavior.Cascade);
 
                 e.HasOne(x => x.Show)
                     .WithMany() // nếu Show có ICollection<TicketType> đổi lại

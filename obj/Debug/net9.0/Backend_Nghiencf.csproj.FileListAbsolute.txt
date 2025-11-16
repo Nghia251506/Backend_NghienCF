@@ -302,7 +302,6 @@
 /Users/trongnghiasoftware/Desktop/Backend_NghienCF/obj/Debug/net9.0/ref/Backend_Nghiencf.dll
 C:\Users\Administrator\Desktop\New folder\Backend_NghienCF\bin\Debug\net9.0\appsettings.Development.json
 C:\Users\Administrator\Desktop\New folder\Backend_NghienCF\bin\Debug\net9.0\appsettings.json
-C:\Users\Administrator\Desktop\New folder\Backend_NghienCF\bin\Debug\net9.0\ga4-key.json
 C:\Users\Administrator\Desktop\New folder\Backend_NghienCF\bin\Debug\net9.0\Backend_Nghiencf.staticwebassets.runtime.json
 C:\Users\Administrator\Desktop\New folder\Backend_NghienCF\bin\Debug\net9.0\Backend_Nghiencf.staticwebassets.endpoints.json
 C:\Users\Administrator\Desktop\New folder\Backend_NghienCF\bin\Debug\net9.0\Backend_Nghiencf.exe
@@ -467,3 +466,9 @@ C:\Users\Administrator\Desktop\New folder\Backend_NghienCF\obj\Debug\net9.0\refi
 C:\Users\Administrator\Desktop\New folder\Backend_NghienCF\obj\Debug\net9.0\Backend_Nghiencf.pdb
 C:\Users\Administrator\Desktop\New folder\Backend_NghienCF\obj\Debug\net9.0\Backend_Nghiencf.genruntimeconfig.cache
 C:\Users\Administrator\Desktop\New folder\Backend_NghienCF\obj\Debug\net9.0\ref\Backend_Nghiencf.dll
+C:\Users\Administrator\Desktop\New folder\Backend_NghienCF\bin\Debug\net9.0\Polly.dll
+C:\Users\Administrator\Desktop\New folder\Backend_NghienCF\bin\Debug\net9.0\Polly.Core.dll
+C:\Users\Administrator\Desktop\New folder\Backend_NghienCF\bin\Debug\net9.0\Quartz.dll
+C:\Users\Administrator\Desktop\New folder\Backend_NghienCF\bin\Debug\net9.0\Quartz.Extensions.DependencyInjection.dll
+C:\Users\Administrator\Desktop\New folder\Backend_NghienCF\bin\Debug\net9.0\Quartz.Extensions.Hosting.dll
+C:\Users\Administrator\Desktop\New folder\Backend_NghienCF\bin\Debug\net9.0\RabbitMQ.Client.dll

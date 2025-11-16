@@ -10,6 +10,8 @@ namespace Backend_Nghiencf.Models
         public string? Description{ get; set; }
         public int TotalQuantity { get; set; }
         public int RemainingQuantity { get; set; }
+        // NEW: số ghế mà 1 vé loại này chiếm (S=1, SVip=1, Couple=2)
+        public int SeatsUnit { get; set; }
 
         public Show Show { get; set; }
     }

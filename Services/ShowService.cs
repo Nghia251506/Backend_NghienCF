@@ -1,135 +1,40 @@
-using System.Runtime.Intrinsics.X86;
 using Backend_Nghiencf.Data;
 using Backend_Nghiencf.DTOs;
 using Backend_Nghiencf.Models;
 using Microsoft.EntityFrameworkCore;
+
 namespace Backend_Nghiencf.Services
 {
     public class ShowService : IShowService
     {
         private readonly AppDbContext _context;
 
-        private static string? NormalizeBannerUrl(string? url)
-        {
-            if (string.IsNullOrWhiteSpace(url))
-                return null;
-
-            url = url.Trim();
-
-            // nếu BE / proxy trả về http://api.chamkhoanhkhac.com/... thì ép sang https
-            if (url.StartsWith("http://", StringComparison.OrdinalIgnoreCase))
-            {
-                url = "https://" + url.Substring("http://".Length);
-            }
-
-            return url;
-        }
         public ShowService(AppDbContext context)
         {
             _context = context;
         }
 
-        public async Task<IEnumerable<ShowReadDto>> GetAllAsync()
+        // Ép http -> https nếu cần, trim rỗng => null
+        private static string? NormalizeBannerUrl(string? url)
         {
-            return await _context.Shows
-            .Where(s => s.DeleteStatus == "Active")
-            .Select(s => new ShowReadDto
+            if (string.IsNullOrWhiteSpace(url)) return null;
+            url = url.Trim();
+
+            if (url.StartsWith("http://", StringComparison.OrdinalIgnoreCase))
             {
-                Id = s.Id,
-                Title = s.Title,
-                Description = s.Description,
-                Date = s.Date,
-                Location = s.Location,
-                BannerUrl = s.BannerUrl,
-                Capacity = s.Capacity,
-                Slogan = s.Slogan,
-                IsDefault = s.IsDefault,
-                DeleteStatus = s.DeleteStatus,
-            })
-            .ToListAsync();
-        }
-
-        public async Task<ShowReadDto?> GetShowByTitleAsync(string Title)
-        {
-            var show = await _context.Shows.FirstOrDefaultAsync(s => s.Title == Title);
-            if (show == null) return null;
-
-            return new ShowReadDto
-            {
-                Id = show.Id,
-                Title = show.Title,
-                Description = show.Description,
-                Date = show.Date,
-                Location = show.Location,
-                BannerUrl = show.BannerUrl,
-                Capacity = show.Capacity,
-                Slogan = show.Slogan
-            };
-        }
-
-
-        public async Task<ShowReadDto> CreateAsync(ShowCreateDto dto)
-        {
-            if (dto == null) throw new ArgumentNullException(nameof(dto));
-            if (dto.Capacity == "") throw new ArgumentException("Capacity phải >= 0", nameof(dto.Capacity));
-
-            var show = new Show
-            {
-                Title = (dto.Title ?? string.Empty).Trim(),
-                Description = (dto.Description ?? string.Empty).Trim(),
-                Date = NormalizeDate(dto.Date),
-                Location = (dto.Location ?? string.Empty).Trim(),
-                BannerUrl = string.IsNullOrWhiteSpace(NormalizeBannerUrl(dto.BannerUrl)) ? null : dto.BannerUrl!.Trim(),
-                Capacity = dto.Capacity,
-                Slogan = (dto.Slogan ?? string.Empty).Trim()
-            };
-
-            _context.Shows.Add(show);
-            await _context.SaveChangesAsync();
-
-            return ToReadDto(show);
-        }
-
-        private DateTime NormalizeDate(DateTimeOffset date)
-        {
-            throw new NotImplementedException();
-        }
-
-        public async Task<ShowReadDto?> UpdateAsync(string Title, ShowUpdateDto dto)
-        {
-            if (string.IsNullOrWhiteSpace(Title)) return null;
-
-            // Tìm theo Title không phân biệt hoa/thường
-            var show = await _context.Shows
-                .FirstOrDefaultAsync(s => s.Title.ToLower() == Title.Trim().ToLower());
-
-            if (show == null) return null;
-
-            // Cập nhật các trường (trim & chuẩn hoá)
-            show.Title = (dto.Title ?? string.Empty).Trim();
-            show.Description = (dto.Description ?? string.Empty).Trim();
-            show.Date = NormalizeDate(dto.Date);
-            show.Location = (dto.Location ?? string.Empty).Trim();
-            show.Capacity = dto.Capacity;
-            show.Slogan = (dto.Slogan ?? string.Empty).Trim();
-
-            // BannerUrl theo 3 trạng thái:
-            // - null  => không đổi (FE không gửi)
-            // - ""    => xoá ảnh (set null)
-            // - value => cập nhật URL
-            if (dto.BannerUrl != null)
-            {
-                show.BannerUrl = string.IsNullOrWhiteSpace(NormalizeBannerUrl(dto.BannerUrl))
-                    ? null
-                    : dto.BannerUrl.Trim();
+                url = "https://" + url.Substring("http://".Length);
             }
-
-            await _context.SaveChangesAsync();
-
-            return ToReadDto(show);
+            return url;
         }
 
-        // ----------------- helpers -----------------
+        // Chuẩn hoá DateTime về UTC (tránh lệch múi)
+        private static DateTime NormalizeDate(DateTime date)
+        {
+            if (date.Kind == DateTimeKind.Unspecified)
+                return DateTime.SpecifyKind(date, DateTimeKind.Utc);
+
+            return date.Kind == DateTimeKind.Utc ? date : date.ToUniversalTime();
+        }
 
         private static ShowReadDto ToReadDto(Show s) => new ShowReadDto
         {
@@ -138,20 +43,85 @@ namespace Backend_Nghiencf.Services
             Description = s.Description,
             Date = s.Date,
             Location = s.Location,
-            BannerUrl = s.BannerUrl,
-            Capacity = s.Capacity,
-            Slogan = s.Slogan
+            BannerUrl = NormalizeBannerUrl(s.BannerUrl), // trả về bản đã chuẩn hoá
+            TotalSeats = s.TotalSeats,
+            RemainingSeats = s.RemainingSeats,
+            Slogan = s.Slogan,
+            IsDefault = s.IsDefault,
+            DeleteStatus = s.DeleteStatus
         };
 
-        // Nếu Date là DateTime → chuẩn hoá về UTC để khớp FE gửi ISO.
-        // Nếu bạn dùng DateTimeOffset thì có thể trả về thẳng không cần Normalize.
-        private static DateTime NormalizeDate(DateTime date)
+        public async Task<IEnumerable<ShowReadDto>> GetAllAsync()
         {
-            // Nếu Kind = Unspecified (thường khi map từ JSON) → coi như UTC để tránh lệch múi.
-            if (date.Kind == DateTimeKind.Unspecified)
-                return DateTime.SpecifyKind(date, DateTimeKind.Utc);
+            return await _context.Shows
+                .Where(s => s.DeleteStatus == "Active")
+                .OrderBy(s => s.Date)
+                .Select(s => ToReadDto(s))
+                .ToListAsync();
+        }
 
-            return date.Kind == DateTimeKind.Utc ? date : date.ToUniversalTime();
+        public async Task<ShowReadDto?> GetShowByTitleAsync(string title)
+        {
+            if (string.IsNullOrWhiteSpace(title)) return null;
+
+            var show = await _context.Shows
+                .FirstOrDefaultAsync(s =>
+                    s.DeleteStatus == "Active" &&
+                    s.Title.ToLower() == title.Trim().ToLower());
+
+            return show == null ? null : ToReadDto(show);
+        }
+
+        public async Task<ShowReadDto> CreateAsync(ShowCreateDto dto)
+        {
+            if (dto == null) throw new ArgumentNullException(nameof(dto));
+            if (dto.TotalSeats == 0) throw new ArgumentException("Capacity phải >= 0", nameof(dto.TotalSeats));
+
+            var show = new Show
+            {
+                Title = (dto.Title ?? string.Empty).Trim(),
+                Description = (dto.Description ?? string.Empty).Trim(),
+                Date = NormalizeDate(dto.Date),
+                Location = (dto.Location ?? string.Empty).Trim(),
+                BannerUrl = NormalizeBannerUrl(dto.BannerUrl), // dùng kết quả normalize
+                TotalSeats = dto.TotalSeats,
+                Slogan = (dto.Slogan ?? string.Empty).Trim(),
+                // các cột IsDefault/DeleteStatus nếu DB mặc định thì không cần gán ở đây
+            };
+
+            _context.Shows.Add(show);
+            await _context.SaveChangesAsync();
+
+            return ToReadDto(show);
+        }
+
+        public async Task<ShowReadDto?> UpdateAsync(string title, ShowUpdateDto dto)
+        {
+            if (string.IsNullOrWhiteSpace(title)) return null;
+
+            var show = await _context.Shows
+                .FirstOrDefaultAsync(s =>
+                    s.DeleteStatus == "Active" &&
+                    s.Title.ToLower() == title.Trim().ToLower());
+
+            if (show == null) return null;
+
+            show.Title = (dto.Title ?? string.Empty).Trim();
+            show.Description = (dto.Description ?? string.Empty).Trim();
+            show.Date = NormalizeDate(dto.Date);
+            show.Location = (dto.Location ?? string.Empty).Trim();
+            show.TotalSeats = dto.TotalSeats;
+            show.Slogan = (dto.Slogan ?? string.Empty).Trim();
+
+            // BannerUrl: null = không đổi; "" = xoá; còn lại = cập nhật (đã normalize)
+            if (dto.BannerUrl != null)
+            {
+                var normalized = NormalizeBannerUrl(dto.BannerUrl);
+                show.BannerUrl = normalized; // nếu dto.BannerUrl rỗng => normalized = null => xoá
+            }
+
+            await _context.SaveChangesAsync();
+            return ToReadDto(show);
         }
 
         public async Task<bool> DeleteAsync(int id)
@@ -159,30 +129,46 @@ namespace Backend_Nghiencf.Services
             var show = await _context.Shows.FirstOrDefaultAsync(s => s.Id == id);
             if (show == null) return false;
 
-            show.DeleteStatus = "Deleted";   // 👈 đổi trạng thái
-                                             // nếu đang default thì bỏ luôn cho chắc
-            if (show.IsDefault == "Active")
-                show.IsDefault = "Inactive";
+            show.DeleteStatus = "Deleted";
+            if (show.IsDefault == "Active") show.IsDefault = "Inactive";
 
             await _context.SaveChangesAsync();
             return true;
         }
+
         public async Task<bool> SetDefaultShow(int id)
         {
-            var showDefault = await _context.Shows.FirstOrDefaultAsync(s => s.Id == id);
+            var showDefault = await _context.Shows.FirstOrDefaultAsync(s => s.Id == id && s.DeleteStatus == "Active");
             if (showDefault == null) return false;
 
-            //clear
-            var currentShow = await _context.Shows.FirstOrDefaultAsync(s => s.IsDefault == "Active");
-            if (currentShow != null)
-            {
-                currentShow.IsDefault = "Inactive";
-            }
+            var currentDefault = await _context.Shows.FirstOrDefaultAsync(s => s.IsDefault == "Active");
+            if (currentDefault != null) currentDefault.IsDefault = "Inactive";
 
-            //set 
             showDefault.IsDefault = "Active";
             await _context.SaveChangesAsync();
             return true;
+        }
+
+        // ====== Thêm cho FE: Coming Soon & Default ======
+
+        // Lấy danh sách show sắp diễn ra (>= nowUtc), order theo thời gian, có thể giới hạn số lượng
+        public async Task<IEnumerable<ShowReadDto>> GetComingSoonAsync(int take = 6)
+        {
+            var nowUtc = DateTime.UtcNow;
+            return await _context.Shows
+                .Where(s => s.DeleteStatus == "Active" && s.Date >= nowUtc)
+                .OrderBy(s => s.Date)
+                .Take(take)
+                .Select(s => ToReadDto(s))
+                .ToListAsync();
+        }
+
+        // Lấy show đang set default (nếu có)
+        public async Task<ShowReadDto?> GetDefaultAsync()
+        {
+            var show = await _context.Shows
+                .FirstOrDefaultAsync(s => s.DeleteStatus == "Active" && s.IsDefault == "Active");
+            return show == null ? null : ToReadDto(show);
         }
     }
 }

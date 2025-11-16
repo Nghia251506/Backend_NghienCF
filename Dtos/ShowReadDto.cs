@@ -11,6 +11,8 @@ namespace Backend_Nghiencf.DTOs
         public string? Location { get; set; }
         public string? BannerUrl { get; set; }
         public string? Capacity { get; set; }
+        public int TotalSeats { get; set; }
+        public int RemainingSeats { get; set; }
         public string? Slogan { get; set; }
         public string IsDefault { get; set; } = "Inactive";
         public string? DeleteStatus { get; set; } = "Active";

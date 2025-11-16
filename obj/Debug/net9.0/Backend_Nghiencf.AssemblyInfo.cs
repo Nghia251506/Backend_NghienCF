@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Backend_Nghiencf")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+b03b4e35af41e5bb4552ab4e1deaed877b53d29f")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+887a109ea55715f0bb7ba0530c245588f002db60")]
 [assembly: System.Reflection.AssemblyProductAttribute("Backend_Nghiencf")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Backend_Nghiencf")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
