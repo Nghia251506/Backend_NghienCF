@@ -85,6 +85,7 @@ namespace Backend_Nghiencf.Services
                 Location = (dto.Location ?? string.Empty).Trim(),
                 BannerUrl = NormalizeBannerUrl(dto.BannerUrl), // dùng kết quả normalize
                 TotalSeats = dto.TotalSeats,
+                RemainingSeats = dto.TotalSeats,
                 Slogan = (dto.Slogan ?? string.Empty).Trim(),
                 // các cột IsDefault/DeleteStatus nếu DB mặc định thì không cần gán ở đây
             };
