@@ -1,28 +1,24 @@
+# fly.toml app configuration file generated for backend-nghiencf on 2026-01-14T18:35:20Z
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
+
 app = 'backend-nghiencf'
 primary_region = 'sin'
 
 [build]
-  # Nếu dùng Dockerfile custom, không cần gì thêm
+
 
 [http_service]
   internal_port = 8080
   force_https = true
-  auto_stop_machines = 'suspend'   # suspend khi idle, tiết kiệm
+  auto_stop_machines = 'suspend'   # hoặc 'off' để luôn chạy (tốn hơn nếu idle)
   auto_start_machines = true
-  min_machines_running = 0         # scale to zero
+  min_machines_running = 0
   processes = ['app']
 
-  # Thêm health check để Fly biết app ready (giảm lỗi stuck)
-  [http_service.checks]
-    grace_period = "10s"
-    interval = "30s"
-    method = "GET"
-    timeout = "5s"
-    path = "/"   # Hoặc "/health" nếu bạn có endpoint health
-
-# Xóa hoặc comment [[vm]] nếu không cần custom (Fly auto set shared 256MB/1cpu cho low cost)
-# Nếu muốn tăng RAM (test OOM), uncomment và set:
-# [[vm]]
-#   cpu_kind = 'shared'
-#   cpus = 1
-#   memory_mb = 512   # Tăng lên 512MB nếu app .NET start nặng (~$1-2/tháng nếu chạy nhiều)
+[[vm]]
+  memory = '1gb'
+  cpu_kind = 'shared'
+  cpus = 1
+  memory_mb = 256
